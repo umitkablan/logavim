@@ -42,3 +42,6 @@ augroup LogaVim_Schemes_LocalDefs
 augroup END
 ```
 
+Shrinking Long Lines
+--------------------
+If you want to shrink long lines you could add `'shrink_maxlen'` attribute to the scheme dictionary. This will crop long lines and append `...` to the end as as marker.

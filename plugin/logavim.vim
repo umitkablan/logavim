@@ -44,16 +44,19 @@ function! s:parseLoglineToPattern(logln, dict, color_section) abort
     return logline
 endfunction
 
-function! s:populateFilterWithColor(bufnr, pat, color_map) abort
+function! s:populateFilterWithColor(bufnr, pat, color_map, shrink_maxlen) abort
     let i = 0
     for line in getbufline(a:bufnr, 1, '$')
         let i = i + 1
         let mm = matchlist(line, a:pat)
+        let cropped_line = line
         if len(mm)
-            put=line[len(mm[0]):]
-        else
-            put=line
+            let cropped_line = line[len(mm[0]):]
         endif
+        if a:shrink_maxlen > 0 && len(cropped_line) > a:shrink_maxlen
+            let cropped_line = cropped_line[0:a:shrink_maxlen] . '...'
+        endif
+        put=cropped_line
         if len(mm) < 2
             continue
         endif
@@ -72,9 +75,10 @@ function! s:populateUsingScheme(bufnr, scheme) abort
     let dict = get(a:scheme, 'dict', {})
     let color_section = get(a:scheme, 'color_section', '')
     let color_map = get(a:scheme, 'color_map', {})
+    let shrink_maxlen = get(a:scheme, 'shrink_maxlen', 0)
     let logpat = s:parseLoglineToPattern(logline, dict, color_section)
     call setbufvar(a:bufnr, 'logalize_line_pattern', logpat)
-    call s:populateFilterWithColor(a:bufnr, logpat, color_map)
+    call s:populateFilterWithColor(a:bufnr, logpat, color_map, shrink_maxlen)
 endfunction
 
 function! s:populateFilteredLogs(bufnr, pat) abort
