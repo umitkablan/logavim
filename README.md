@@ -45,3 +45,23 @@ augroup END
 Shrinking Long Lines
 --------------------
 If you want to shrink long lines you could add `'shrink_maxlen'` attribute to the scheme dictionary. This will crop long lines and append `...` to the end as as marker.
+
+Disable Coloring
+----------------
+If you want to disable coloring of some log lines. You can provide -nocolor argument to `:Logalize` command.
+
+Let's say your coloring is based on loglevel and you don't want to colorize INFO logs:
+```vim
+:Logalize -nocolor=INFO
+```
+
+Or you want no colors:
+```vim
+:Logalize -nocolor
+```
+
+Or you want both INFO and DEBUG to be colorless:
+```vim
+:Logalize -nocolor=INFO,DEBUG
+```
+
