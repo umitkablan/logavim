@@ -10,6 +10,73 @@ function! s:splitNewBuf(bufname) abort
     setlocal foldmethod=manual foldcolumn=0
 endfunction
 
+function! s:getLogKeyFromString(logline, firstidx) abort
+    let [index_start, index_end] = [stridx(a:logline, '%', a:firstidx), -1]
+    if index_start < 0
+        return ['', index_start, index_end]
+    endif
+    let index_end = stridx(a:logline, '%', index_start+1)
+    if index_end < 0
+        return ['', index_start, index_end]
+    endif
+    return [a:logline[index_start+1:index_end-1], index_start, index_end]
+endfunction
+
+function! s:parseLoglineToPattern(logln, dict, color_section) abort
+    let [index_start, logline] = [0, a:logln]
+    while 1
+        let [key, index_start, index_end] = s:getLogKeyFromString(logline, index_start)
+        if key ==# ''
+            break
+        endif
+        let pat = get(a:dict, key, '')
+        if pat ==# ''
+            let index_start = index_end + 1
+            continue
+        endif
+        if key ==# a:color_section
+            let pat = '\(' . pat . '\)'
+        endif
+        let diff = len(pat) - len(key) - 1 " -2
+        let logline = logline[0:index_start-1] . pat . logline[index_end+1:]
+        let index_start = index_end + diff " + 1
+    endwhile
+    return logline
+endfunction
+
+function! s:populateFilterWithColor(bufnr, pat, color_map) abort
+    let i = 0
+    for line in getbufline(a:bufnr, 1, '$')
+        let i = i + 1
+        let mm = matchlist(line, a:pat)
+        if len(mm)
+            put=line[len(mm[0]):]
+        else
+            put=line
+        endif
+        if len(mm) < 2
+            continue
+        endif
+        let color_name = get(a:color_map, mm[1], '')
+        if color_name ==# ''
+            continue
+        endif
+        call matchadd(color_name, '\(\%' . i . 'l\)\S')
+    endfor
+    let b:logalized__orig_bufnr = a:bufnr
+    execute 'normal! ggddG'
+endfunction
+
+function! s:populateUsingScheme(bufnr, scheme) abort
+    let logline = get(a:scheme, 'logline', '')
+    let dict = get(a:scheme, 'dict', {})
+    let color_section = get(a:scheme, 'color_section', '')
+    let color_map = get(a:scheme, 'color_map', {})
+    let logpat = s:parseLoglineToPattern(logline, dict, color_section)
+    call setbufvar(a:bufnr, 'logalize_line_pattern', logpat)
+    call s:populateFilterWithColor(a:bufnr, logpat, color_map)
+endfunction
+
 function! s:populateFilteredLogs(bufnr, pat) abort
     let lines = getbufline(a:bufnr, 1, '$')
     for line in lines
@@ -25,12 +92,17 @@ function! s:populateFilteredLogs(bufnr, pat) abort
 endfunction
 
 function! Logalize(bufnr, bufname) abort
-    if !exists('b:logalize_line_pattern')
-        echoerr 'Logalize: b:logalize_line_pattern must be defined!'
+    if exists('b:logavim_scheme') && exists('g:logavim_scheme_' . b:logavim_scheme)
+        let scheme_varname = 'g:logavim_scheme_' . b:logavim_scheme
+        call s:splitNewBuf('logalized_' . a:bufname)
+        call s:populateUsingScheme(a:bufnr, eval(scheme_varname))
+    elseif exists('b:logalize_line_pattern')
+        call s:splitNewBuf('logalized_' . a:bufname)
+        call s:populateFilteredLogs(a:bufnr, getbufvar(a:bufnr, 'logalize_line_pattern'))
+    else
+        echoerr 'Logalize: b:logavim_scheme must be defined!'
         return
     endif
-    call s:splitNewBuf('logalized_' . a:bufname)
-    call s:populateFilteredLogs(a:bufnr, getbufvar(a:bufnr, 'logalize_line_pattern'))
     setlocal nomodifiable readonly
 endfunction
 
