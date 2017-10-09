@@ -45,9 +45,9 @@ function! s:parseLoglineToPattern(logln, dict, color_section) abort
 endfunction
 
 function! s:populateFilterWithColor(bufnr, pat, color_map, shrink_maxlen) abort
-    let i = 0
+    let line_num = 0
     for line in getbufline(a:bufnr, 1, '$')
-        let i = i + 1
+        let line_num = line_num + 1
         let mm = matchlist(line, a:pat)
         let cropped_line = line
         if len(mm)
@@ -64,7 +64,7 @@ function! s:populateFilterWithColor(bufnr, pat, color_map, shrink_maxlen) abort
         if color_name ==# ''
             continue
         endif
-        call matchadd(color_name, '\(\%' . i . 'l\)\S')
+        call matchaddpos(color_name, [line_num])
     endfor
     let b:logalized__orig_bufnr = a:bufnr
     execute 'normal! ggddG'
