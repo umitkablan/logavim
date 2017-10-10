@@ -1,7 +1,7 @@
-if exists('g:loaded_logalize_plugin')
+if exists('g:loaded_logavim_plugin')
     finish
 endif
-let g:loaded_logalize_plugin = 1
+let g:loaded_logavim_plugin = 1
 
 function! s:splitNewBuf(bufname) abort
     execute 'aboveleft split ' . a:bufname
@@ -66,7 +66,7 @@ function! s:populateFilterWithColor(bufnr, pat, color_map, shrink_maxlen, nocolo
         endif
         call matchaddpos(color_name, [line_num])
     endfor
-    let b:logalized__orig_bufnr = a:bufnr
+    let b:logavim__orig_bufnr = a:bufnr
     execute 'normal! ggddG'
 endfunction
 
@@ -76,7 +76,7 @@ function! s:populateUsingScheme(bufnr, scheme, nocolor_list, show_colors) abort
     let color_section = get(a:scheme, 'color_section', '')
     let shrink_maxlen = get(a:scheme, 'shrink_maxlen', 0)
     let logpat = s:parseLoglineToPattern(logline, dict, color_section)
-    call setbufvar(a:bufnr, 'logalize_line_pattern', logpat)
+    call setbufvar(a:bufnr, 'logavim_line_pattern', logpat)
     if len(a:nocolor_list) || a:show_colors
         let color_map = get(a:scheme, 'color_map', {})
         call s:populateFilterWithColor(a:bufnr, logpat, color_map, shrink_maxlen, a:nocolor_list)
@@ -97,7 +97,7 @@ function! s:populateFilteredLogs(bufnr, pat, shrink_maxlen) abort
         endif
         put=cropped_line
     endfor
-    let b:logalized__orig_bufnr = a:bufnr
+    let b:logavim__orig_bufnr = a:bufnr
     execute 'normal! ggddG'
 endfunction
 
@@ -122,9 +122,9 @@ function! Logalize(bufnr, bufname, args) abort
         let scheme_varname = 'g:logavim_scheme_' . b:logavim_scheme
         call s:splitNewBuf('logalized_' . a:bufname)
         call s:populateUsingScheme(a:bufnr, eval(scheme_varname), split(arg0, ','), !len(a:args))
-    elseif exists('b:logalize_line_pattern')
+    elseif exists('b:logavim_line_pattern')
         call s:splitNewBuf('logalized_' . a:bufname)
-        call s:populateFilteredLogs(a:bufnr, getbufvar(a:bufnr, 'logalize_line_pattern'), 0)
+        call s:populateFilteredLogs(a:bufnr, getbufvar(a:bufnr, 'logavim_line_pattern'), 0)
     else
         echoerr 'Logalize: b:logavim_scheme must be defined!'
         return
@@ -134,8 +134,8 @@ endfunction
 
 function! s:cursorHold() abort
     let linenr = line('.')
-    let line = getbufline(b:logalized__orig_bufnr, linenr, linenr)
-    let i = matchend(line[0], getbufvar(b:logalized__orig_bufnr, 'logalize_line_pattern'))
+    let line = getbufline(b:logavim__orig_bufnr, linenr, linenr)
+    let i = matchend(line[0], getbufvar(b:logavim__orig_bufnr, 'logavim_line_pattern'))
     if i > 0
         echomsg line[0][0:i-1]
     else
@@ -143,9 +143,9 @@ function! s:cursorHold() abort
     endif
 endfunction
 
-augroup Logalize_Augroup
+augroup LogaVim_Augroup
     autocmd!
-    autocmd! CursorHold * if (exists('b:logalized__orig_bufnr')) | call s:cursorHold() |endif
+    autocmd! CursorHold * if (exists('b:logavim__orig_bufnr')) | call s:cursorHold() |endif
 augroup END
 
 comm! -nargs=* Logalize call Logalize(bufnr("%"), fnamemodify(expand("%"), ":t"), [<f-args>])
