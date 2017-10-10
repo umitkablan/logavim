@@ -23,7 +23,6 @@ The log-line pattern should be fed by the user defining two variables: (1) the s
 let g:logavim_scheme_bootlog = {
     \ 'logline': '^%TIME% %LOGLEVEL%: ',
     \ 'dict': {
-      \ 'DATE': '\d\d\d\d-\d\d-\d\d-\d\d',
       \ 'TIME': '\d\d:\d\d:\d\d',
       \ 'LOGLEVEL': '\S\+'
     \ },
@@ -44,24 +43,14 @@ augroup END
 
 Shrinking Long Lines
 --------------------
-If you want to shrink long lines you could add `'shrink_maxlen'` attribute to the scheme dictionary. This will crop long lines and append `...` to the end as as marker.
+If you want to shrink long lines you could add `'shrink_maxlen'` attribute to the scheme dictionary. This will crop long lines and append `...` to the end as a marker.
 
 Disable Coloring
 ----------------
-If you want to disable coloring of some log lines. You can provide -nocolor argument to `:Logalize` command.
+If you want to disable coloring of some log lines. You can provide `-nocolor` argument to `:Logalize` command. `-nocolor=` accepts comma separated values for field tags to disable. If no values are passed then all line coloring is disabled.
 
 Let's say your coloring is based on loglevel and you don't want to colorize INFO logs:
 ```vim
 :Logalize -nocolor=INFO
-```
-
-Or you want no colors:
-```vim
-:Logalize -nocolor
-```
-
-Or you want both INFO and DEBUG to be colorless:
-```vim
-:Logalize -nocolor=INFO,DEBUG
 ```
 
