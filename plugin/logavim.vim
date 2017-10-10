@@ -137,7 +137,7 @@ function! s:cursorHold() abort
     let line = getbufline(b:logavim__orig_bufnr, linenr, linenr)
     let i = matchend(line[0], getbufvar(b:logavim__orig_bufnr, 'logavim_line_pattern'))
     if i > 0
-        echomsg line[0][0:i-1]
+        echomsg line[0]
     else
         echomsg ''
     endif
