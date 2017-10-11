@@ -4,6 +4,7 @@ endif
 let g:loaded_logavim_plugin = 1
 
 function! s:splitNewBuf(bufname) abort
+    setlocal noautoread
     execute 'aboveleft split ' . a:bufname
     setlocal buftype=nofile bufhidden=delete noswapfile nobuflisted
     setlocal modifiable noreadonly
@@ -66,8 +67,6 @@ function! s:populateFilterWithColor(bufnr, pat, color_map, shrink_maxlen, nocolo
         endif
         call matchaddpos(color_name, [line_num])
     endfor
-    let b:logavim__orig_bufnr = a:bufnr
-    execute 'normal! ggddG'
 endfunction
 
 function! s:populateUsingScheme(bufnr, scheme, nocolor_list, show_colors) abort
@@ -97,11 +96,13 @@ function! s:populateFilteredLogs(bufnr, pat, shrink_maxlen) abort
         endif
         put=cropped_line
     endfor
-    let b:logavim__orig_bufnr = a:bufnr
-    execute 'normal! ggddG'
 endfunction
 
 function! Logalize(bufnr, bufname, args) abort
+    if !exists('b:logavim_scheme') || !exists('g:logavim_scheme_' . b:logavim_scheme)
+      echoerr 'LogaVim: Logalize: b:logavim_scheme must be defined!'
+      return
+    endif
     if len(a:args) > 1
         echoerr 'LogaVim: Logalize accepts one argument: -nocolor[=*|COL0,COL1,..]'
         return
@@ -111,24 +112,19 @@ function! Logalize(bufnr, bufname, args) abort
         return
     endif
 
-    if exists('b:logavim_scheme') && exists('g:logavim_scheme_' . b:logavim_scheme)
-        let arg0 = ''
-        if len(a:args) > 0
-            let arg0 = a:args[0][8:]
-            if arg0[0] ==# '='
-                let arg0 = arg0[1:]
-            endif
+    let arg0 = ''
+    if len(a:args) > 0
+        let arg0 = a:args[0][8:]
+        if arg0[0] ==# '='
+            let arg0 = arg0[1:]
         endif
-        let scheme_varname = 'g:logavim_scheme_' . b:logavim_scheme
-        call s:splitNewBuf('logalized_' . a:bufname)
-        call s:populateUsingScheme(a:bufnr, eval(scheme_varname), split(arg0, ','), !len(a:args))
-    elseif exists('b:logavim_line_pattern')
-        call s:splitNewBuf('logalized_' . a:bufname)
-        call s:populateFilteredLogs(a:bufnr, getbufvar(a:bufnr, 'logavim_line_pattern'), 0)
-    else
-        echoerr 'Logalize: b:logavim_scheme must be defined!'
-        return
     endif
+
+    let scheme_varname = 'g:logavim_scheme_' . b:logavim_scheme
+    call s:splitNewBuf('logalized_' . a:bufname)
+    call s:populateUsingScheme(a:bufnr, eval(scheme_varname), split(arg0, ','), !len(a:args))
+    let b:logavim__orig_bufnr = a:bufnr
+    execute 'normal! ggddG'
     setlocal nomodifiable readonly
 endfunction
 
