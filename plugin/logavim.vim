@@ -126,6 +126,7 @@ function! Logalize(bufnr, bufname, args) abort
     let b:logavim__orig_bufnr = a:bufnr
     execute 'normal! ggddG'
     setlocal nomodifiable readonly
+    execute "normal! \<C-w>_"
 endfunction
 
 function! s:cursorHold() abort
