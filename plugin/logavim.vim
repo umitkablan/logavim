@@ -45,8 +45,9 @@ function! s:parseLoglineToPattern(logln, dict, color_section) abort
     return logline
 endfunction
 
-function! s:populateFilterWithColor(bufnr, pat, color_map, shrink_maxlen, nocolor_list, linenr) abort
-  let line_num = a:linenr - 1
+function! s:populateFilterWithColor(bufnr, pat, color_map, shrink_maxlen,
+              \ nocolor_list, linenr) abort
+    let line_num = a:linenr - 1
     let lines = getbufline(a:bufnr, a:linenr, '$')
     for line in lines
         let line_num = line_num + 1
@@ -80,7 +81,8 @@ function! s:populateUsingScheme(bufnr, scheme, nocolor_list, show_colors, linenr
     call setbufvar(a:bufnr, 'logavim_line_pattern', logpat)
     if len(a:nocolor_list) || a:show_colors
         let color_map = get(a:scheme, 'color_map', {})
-        let sync_lines = s:populateFilterWithColor(a:bufnr, logpat, color_map, shrink_maxlen, a:nocolor_list, a:linenr)
+        let sync_lines = s:populateFilterWithColor(a:bufnr, logpat, color_map,
+              \ shrink_maxlen, a:nocolor_list, a:linenr)
     else
         let sync_lines = s:populateFilteredLogs(a:bufnr, logpat, shrink_maxlen, a:linenr)
     endif
@@ -105,8 +107,8 @@ endfunction
 
 function! Logalize(bufnr, bufname, args) abort
     if !exists('b:logavim_scheme') || !exists('g:logavim_scheme_' . b:logavim_scheme)
-      echoerr 'LogaVim: Logalize: b:logavim_scheme must be defined!'
-      return
+        echoerr 'LogaVim: Logalize: b:logavim_scheme must be defined!'
+        return
     endif
     if len(a:args) > 1
         echoerr 'LogaVim: Logalize accepts one argument: -nocolor[=*|COL0,COL1,..]'
@@ -132,7 +134,8 @@ function! Logalize(bufnr, bufname, args) abort
     let b:logavim__scheme_varname = scheme_varname
     let b:logavim__orig_bufnr = a:bufnr
 
-    call s:populateUsingScheme(b:logavim__orig_bufnr, eval(b:logavim__scheme_varname), b:logavim__nocolor_list, b:logavim__noargs, 1)
+    call s:populateUsingScheme(b:logavim__orig_bufnr, eval(b:logavim__scheme_varname),
+          \ b:logavim__nocolor_list, b:logavim__noargs, 1)
 
     normal! ggddG
     setlocal nomodifiable readonly
@@ -144,7 +147,8 @@ function! s:refreshFull() abort
     setlocal modifiable noreadonly
     call clearmatches()
     normal! gg"_dG
-    call s:populateUsingScheme(b:logavim__orig_bufnr, eval(b:logavim__scheme_varname), b:logavim__nocolor_list, b:logavim__noargs, 1)
+    call s:populateUsingScheme(b:logavim__orig_bufnr, eval(b:logavim__scheme_varname),
+          \ b:logavim__nocolor_list, b:logavim__noargs, 1)
     normal! ggddG
     setlocal nomodifiable readonly
 endfunction
@@ -152,7 +156,8 @@ endfunction
 function! s:refreshAppend(linenr) abort
     normal! G
     setlocal modifiable noreadonly
-    call s:populateUsingScheme(b:logavim__orig_bufnr, eval(b:logavim__scheme_varname), b:logavim__nocolor_list, b:logavim__noargs, a:linenr+1)
+    call s:populateUsingScheme(b:logavim__orig_bufnr, eval(b:logavim__scheme_varname),
+          \ b:logavim__nocolor_list, b:logavim__noargs, a:linenr+1)
     setlocal nomodifiable readonly
 endfunction
 
@@ -188,7 +193,8 @@ function! s:checkUpdated(sync_lines, bufnr) abort
 endfunction
 
 function! s:bufEnterEvent() abort
-    let [upd, length] = s:checkUpdated(b:logavim__logalize_synclines, b:logavim__orig_bufnr)
+    let [upd, length] = s:checkUpdated(b:logavim__logalize_synclines,
+          \ b:logavim__orig_bufnr)
     if upd == 2
         call s:refreshFull()
     elseif upd == 1
@@ -197,10 +203,10 @@ function! s:bufEnterEvent() abort
 endfunction
 
 augroup LogaVim_Augroup
-    autocmd!
-    autocmd! CursorHold * if (exists('b:logavim__orig_bufnr')) | call s:cursorHold() |endif
-    autocmd! BufEnter   * if (exists('b:logavim__orig_bufnr'))| call s:bufEnterEvent() |endif
-    autocmd! FileChangedShellPost * if (exists('b:logavim__orig_bufnr'))| call s:bufEnterEvent() |endif
+    au!
+    au! CursorHold * if (exists('b:logavim__orig_bufnr'))| call s:cursorHold() |endif
+    au! BufEnter   * if (exists('b:logavim__orig_bufnr'))| call s:bufEnterEvent() |endif
+    au! FileChangedShellPost * if (exists('b:logavim__orig_bufnr'))| call s:bufEnterEvent() |endif
 augroup END
 
 comm! -nargs=* Logalize call Logalize(bufnr("%"), fnamemodify(expand("%"), ":t"), [<f-args>])
