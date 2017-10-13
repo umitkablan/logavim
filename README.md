@@ -17,6 +17,8 @@ How to Use and Configure
 Open a log file and type `:Logalize` to create a new filtered read-only buffer from the contents of the current log buffer.
 The filtered-out characters of the cursor line will be shown on the command line so you'd have the dirty sections (like date and log level) both away from your eye and easy visible - if the coloring is not enough.
 
+As log files are usually analysed during a program execution, logs will be automatically reloaded when log file is changed by an external program. Both the original log buffer and LogaVim buffer will be reloaded.
+
 The log-line pattern should be fed by the user defining two variables: (1) the scheme with name `g:logavim_scheme_XXXX` and (2) `b:logavim_scheme = 'XXXX'`. These variables better be defined in `vimrc` and `autocommand`s. As an example, let's say we have a boot.log file we need to `:Logalize`:
 
 ```vim

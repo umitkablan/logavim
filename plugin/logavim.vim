@@ -45,9 +45,10 @@ function! s:parseLoglineToPattern(logln, dict, color_section) abort
     return logline
 endfunction
 
-function! s:populateFilterWithColor(bufnr, pat, color_map, shrink_maxlen, nocolor_list) abort
-    let line_num = 0
-    for line in getbufline(a:bufnr, 1, '$')
+function! s:populateFilterWithColor(bufnr, pat, color_map, shrink_maxlen, nocolor_list, linenr) abort
+  let line_num = a:linenr - 1
+    let lines = getbufline(a:bufnr, a:linenr, '$')
+    for line in lines
         let line_num = line_num + 1
         let mm = matchlist(line, a:pat)
         let cropped_line = line
@@ -67,9 +68,10 @@ function! s:populateFilterWithColor(bufnr, pat, color_map, shrink_maxlen, nocolo
         endif
         call matchaddpos(color_name, [line_num])
     endfor
+    return [lines[0], lines[len(lines)-1]]
 endfunction
 
-function! s:populateUsingScheme(bufnr, scheme, nocolor_list, show_colors) abort
+function! s:populateUsingScheme(bufnr, scheme, nocolor_list, show_colors, linenr) abort
     let logline = get(a:scheme, 'logline', '')
     let dict = get(a:scheme, 'dict', {})
     let color_section = get(a:scheme, 'color_section', '')
@@ -78,14 +80,16 @@ function! s:populateUsingScheme(bufnr, scheme, nocolor_list, show_colors) abort
     call setbufvar(a:bufnr, 'logavim_line_pattern', logpat)
     if len(a:nocolor_list) || a:show_colors
         let color_map = get(a:scheme, 'color_map', {})
-        call s:populateFilterWithColor(a:bufnr, logpat, color_map, shrink_maxlen, a:nocolor_list)
+        let sync_lines = s:populateFilterWithColor(a:bufnr, logpat, color_map, shrink_maxlen, a:nocolor_list, a:linenr)
     else
-        call s:populateFilteredLogs(a:bufnr, logpat, shrink_maxlen)
+        let sync_lines = s:populateFilteredLogs(a:bufnr, logpat, shrink_maxlen, a:linenr)
     endif
+    let b:logavim__logalize_synclines = sync_lines
 endfunction
 
-function! s:populateFilteredLogs(bufnr, pat, shrink_maxlen) abort
-    for line in getbufline(a:bufnr, 1, '$')
+function! s:populateFilteredLogs(bufnr, pat, shrink_maxlen, linenr) abort
+    let lines = getbufline(a:bufnr, a:linenr, '$')
+    for line in lines
         let i = matchend(line, a:pat)
         let cropped_line = line
         if i > 0
@@ -96,6 +100,7 @@ function! s:populateFilteredLogs(bufnr, pat, shrink_maxlen) abort
         endif
         put=cropped_line
     endfor
+    return [lines[0], lines[len(lines)-1]]
 endfunction
 
 function! Logalize(bufnr, bufname, args) abort
@@ -122,27 +127,80 @@ function! Logalize(bufnr, bufname, args) abort
 
     let scheme_varname = 'g:logavim_scheme_' . b:logavim_scheme
     call s:splitNewBuf('logalized_' . a:bufname)
-    call s:populateUsingScheme(a:bufnr, eval(scheme_varname), split(arg0, ','), !len(a:args))
+    let b:logavim__nocolor_list = split(arg0, ',')
+    let b:logavim__noargs = !len(a:args)
+    let b:logavim__scheme_varname = scheme_varname
     let b:logavim__orig_bufnr = a:bufnr
-    execute 'normal! ggddG'
+
+    call s:populateUsingScheme(b:logavim__orig_bufnr, eval(b:logavim__scheme_varname), b:logavim__nocolor_list, b:logavim__noargs, 1)
+
+    normal! ggddG
     setlocal nomodifiable readonly
+    call setbufvar(a:bufnr, '&autoread', 1)
     execute "normal! \<C-w>_"
 endfunction
 
+function! s:refreshFull() abort
+    setlocal modifiable noreadonly
+    call clearmatches()
+    normal! gg"_dG
+    call s:populateUsingScheme(b:logavim__orig_bufnr, eval(b:logavim__scheme_varname), b:logavim__nocolor_list, b:logavim__noargs, 1)
+    normal! ggddG
+    setlocal nomodifiable readonly
+endfunction
+
+function! s:refreshAppend(linenr) abort
+    normal! G
+    setlocal modifiable noreadonly
+    call s:populateUsingScheme(b:logavim__orig_bufnr, eval(b:logavim__scheme_varname), b:logavim__nocolor_list, b:logavim__noargs, a:linenr+1)
+    setlocal nomodifiable readonly
+endfunction
+
 function! s:cursorHold() abort
-    let linenr = line('.')
+    try
+      let linenr = line('.')
     let line = getbufline(b:logavim__orig_bufnr, linenr, linenr)
     let i = matchend(line[0], getbufvar(b:logavim__orig_bufnr, 'logavim_line_pattern'))
     if i > 0
-        echomsg line[0]
+      echomsg line[0]
     else
-        echomsg ''
+      echomsg ''
+    endif
+  catch /.*/
+    echomsg 'LogaVim ERROR: ' . v:exception
+  endtry
+endfunction
+
+function! s:checkUpdated(sync_lines, bufnr) abort
+    let len_logalize = len(getbufline('%', 1, '$'))
+    let len_orig = len(getbufline(a:bufnr, 1, '$'))
+    if len_orig < len_logalize
+      return [2, len_orig]
+    endif
+    if a:sync_lines[0] !=# getbufline(a:bufnr, 1, 1)[0]
+          \ || a:sync_lines[1] !=# getbufline(a:bufnr, len_logalize, len_logalize)[0]
+        return [2, len_orig]
+    endif
+    if len_orig == len_logalize
+        return [0, 0]
+    endif
+    return [1, len_logalize]
+endfunction
+
+function! s:bufEnterEvent() abort
+    let [upd, length] = s:checkUpdated(b:logavim__logalize_synclines, b:logavim__orig_bufnr)
+    if upd == 2
+        call s:refreshFull()
+    elseif upd == 1
+        call s:refreshAppend(length)
     endif
 endfunction
 
 augroup LogaVim_Augroup
     autocmd!
     autocmd! CursorHold * if (exists('b:logavim__orig_bufnr')) | call s:cursorHold() |endif
+    autocmd! BufEnter   * if (exists('b:logavim__orig_bufnr'))| call s:bufEnterEvent() |endif
+    autocmd! FileChangedShellPost * if (exists('b:logavim__orig_bufnr'))| call s:bufEnterEvent() |endif
 augroup END
 
 comm! -nargs=* Logalize call Logalize(bufnr("%"), fnamemodify(expand("%"), ":t"), [<f-args>])
