@@ -212,3 +212,6 @@ augroup LogaVim_Augroup
 augroup END
 
 comm! -nargs=* Logalize call Logalize(bufnr("%"), fnamemodify(expand("%"), ":t"), [<f-args>])
+
+silent do LogaVim_User User LogaVimLoaded
+
