@@ -19,10 +19,10 @@ The filtered-out characters of the cursor line will be shown on the command line
 
 As log files are usually analysed during a program execution, logs will be automatically reloaded when log file is changed by an external program. Both the original log buffer and LogaVim buffer will be reloaded.
 
-The log-line pattern should be fed by the user defining two variables: (1) the scheme with name `g:logavim_scheme_XXXX` and (2) `b:logavim_scheme = 'XXXX'`. These variables better be defined in `vimrc` and `autocommand`s. As an example, let's say we have a boot.log file we need to `:Logalize`:
+The log-line pattern should be fed by the user, first by registering the scheme with it's name and then defining the buffer variable `b:logavim_scheme` the scheme name registered before. These variables better be defined in `vimrc` and `autocommand`s. As an example, let's say we have a boot.log file we need to `:Logalize`:
 
 ```vim
-let g:logavim_scheme_bootlog = {
+call lgv#registry#Add('bootlog', {
     \ 'logline': '^%TIME% %LOGLEVEL%: ',
     \ 'dict': {
       \ 'TIME': '\d\d:\d\d:\d\d',
@@ -35,7 +35,7 @@ let g:logavim_scheme_bootlog = {
       \ 'INFO':  'Todo',
       \ 'DEBUG': 'DiffChange'
     \ }
-  \ }
+  \ })
 
 augroup LogaVim_Schemes_LocalDefs
   au!

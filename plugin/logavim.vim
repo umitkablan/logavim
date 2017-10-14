@@ -106,7 +106,7 @@ function! s:populateFilteredLogs(bufnr, pat, shrink_maxlen, linenr) abort
 endfunction
 
 function! Logalize(bufnr, bufname, args) abort
-    if !exists('b:logavim_scheme') || !exists('g:logavim_scheme_' . b:logavim_scheme)
+    if !exists('b:logavim_scheme')
         echoerr 'LogaVim: Logalize: b:logavim_scheme must be defined!'
         return
     endif
@@ -127,14 +127,14 @@ function! Logalize(bufnr, bufname, args) abort
         endif
     endif
 
-    let scheme_varname = 'g:logavim_scheme_' . b:logavim_scheme
     call s:splitNewBuf('logalized_' . a:bufname)
     let b:logavim__nocolor_list = split(arg0, ',')
     let b:logavim__noargs = !len(a:args)
-    let b:logavim__scheme_varname = scheme_varname
+    let b:logavim__scheme_name = getbufvar(a:bufnr, 'logavim_scheme')
     let b:logavim__orig_bufnr = a:bufnr
 
-    call s:populateUsingScheme(b:logavim__orig_bufnr, eval(b:logavim__scheme_varname),
+    call s:populateUsingScheme(b:logavim__orig_bufnr,
+          \ lgv#registry#GetByName(b:logavim__scheme_name),
           \ b:logavim__nocolor_list, b:logavim__noargs, 1)
 
     normal! ggddG
@@ -147,7 +147,8 @@ function! s:refreshFull() abort
     setlocal modifiable noreadonly
     call clearmatches()
     normal! gg"_dG
-    call s:populateUsingScheme(b:logavim__orig_bufnr, eval(b:logavim__scheme_varname),
+    call s:populateUsingScheme(b:logavim__orig_bufnr,
+          \ lgv#registry#GetByName(b:logavim__scheme_name),
           \ b:logavim__nocolor_list, b:logavim__noargs, 1)
     normal! ggddG
     setlocal nomodifiable readonly
@@ -156,7 +157,8 @@ endfunction
 function! s:refreshAppend(linenr) abort
     normal! G
     setlocal modifiable noreadonly
-    call s:populateUsingScheme(b:logavim__orig_bufnr, eval(b:logavim__scheme_varname),
+    call s:populateUsingScheme(b:logavim__orig_bufnr,
+          \ lgv#registry#GetByName(b:logavim__scheme_name),
           \ b:logavim__nocolor_list, b:logavim__noargs, a:linenr+1)
     setlocal nomodifiable readonly
 endfunction
