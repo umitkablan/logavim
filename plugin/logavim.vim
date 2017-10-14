@@ -165,16 +165,16 @@ endfunction
 
 function! s:cursorHold() abort
     try
-      let linenr = line('.')
+        let linenr = line('.')
     let line = getbufline(b:logavim__orig_bufnr, linenr, linenr)
     let i = matchend(line[0], getbufvar(b:logavim__orig_bufnr, 'logavim_line_pattern'))
     if i > 0
-      echomsg line[0]
+        echomsg line[0]
     else
-      echomsg ''
+        echomsg ''
     endif
   catch /.*/
-    echomsg 'LogaVim ERROR: ' . v:exception
+      echomsg 'LogaVim ERROR: ' . v:exception
   endtry
 endfunction
 
@@ -182,7 +182,7 @@ function! s:checkUpdated(sync_lines, bufnr) abort
     let len_logalize = len(getbufline('%', 1, '$'))
     let len_orig = len(getbufline(a:bufnr, 1, '$'))
     if len_orig < len_logalize
-      return [2, len_orig]
+        return [2, len_orig]
     endif
     if a:sync_lines[0] !=# getbufline(a:bufnr, 1, 1)[0]
           \ || a:sync_lines[1] !=# getbufline(a:bufnr, len_logalize, len_logalize)[0]
