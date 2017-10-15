@@ -45,8 +45,33 @@ function! s:parseLoglineToPattern(logln, dict, color_section) abort
     return logline
 endfunction
 
+function! s:filterOutPats(pats, line) abort
+    let ret = a:line
+    for p in a:pats
+        let ret = substitute(ret, p[0], p[1], '')
+    endfor
+    return ret
+endfunction
+
+function! s:populateFilteredLogs(bufnr, pat, shrink_maxlen, linenr) abort
+    let lines = getbufline(a:bufnr, a:linenr, '$')
+    for line in lines
+        let i = matchend(line, a:pat)
+        let cropped_line = line
+        if i > 0
+            let cropped_line = line[i:]
+        endif
+        let cropped_line = s:filterOutPats(b:logavim__replace_pats, cropped_line)
+        if a:shrink_maxlen > 0 && len(cropped_line) > a:shrink_maxlen
+            let cropped_line = cropped_line[0:a:shrink_maxlen] . '...'
+        endif
+        put=cropped_line
+    endfor
+    return [lines[0], lines[len(lines)-1]]
+endfunction
+
 function! s:populateFilterWithColor(bufnr, pat, color_map, shrink_maxlen,
-              \ nocolor_list, linenr) abort
+                \ nocolor_list, linenr) abort
     let line_num = a:linenr - 1
     let lines = getbufline(a:bufnr, a:linenr, '$')
     for line in lines
@@ -56,6 +81,7 @@ function! s:populateFilterWithColor(bufnr, pat, color_map, shrink_maxlen,
         if len(mm)
             let cropped_line = line[len(mm[0]):]
         endif
+        let cropped_line = s:filterOutPats(b:logavim__replace_pats, cropped_line)
         if a:shrink_maxlen > 0 && len(cropped_line) > a:shrink_maxlen
             let cropped_line = cropped_line[0:a:shrink_maxlen] . '...'
         endif
@@ -82,30 +108,35 @@ function! s:populateUsingScheme(bufnr, scheme, nocolor_list, show_colors, linenr
     if len(a:nocolor_list) || a:show_colors
         let color_map = get(a:scheme, 'color_map', {})
         let sync_lines = s:populateFilterWithColor(a:bufnr, logpat, color_map,
-              \ shrink_maxlen, a:nocolor_list, a:linenr)
+                \ shrink_maxlen, a:nocolor_list, a:linenr)
     else
         let sync_lines = s:populateFilteredLogs(a:bufnr, logpat, shrink_maxlen, a:linenr)
     endif
     let b:logavim__logalize_synclines = sync_lines
 endfunction
 
-function! s:populateFilteredLogs(bufnr, pat, shrink_maxlen, linenr) abort
-    let lines = getbufline(a:bufnr, a:linenr, '$')
-    for line in lines
-        let i = matchend(line, a:pat)
-        let cropped_line = line
-        if i > 0
-            let cropped_line = line[i:]
-        endif
-        if a:shrink_maxlen > 0 && len(cropped_line) > a:shrink_maxlen
-            let cropped_line = cropped_line[0:a:shrink_maxlen] . '...'
-        endif
-        put=cropped_line
-    endfor
-    return [lines[0], lines[len(lines)-1]]
+function! s:replaceCmd(args) abort
+    if len(a:args) == 0 || len(a:args) > 2
+        echoerr 'LogaVim: LGIgnorePat usage: <pattern> [<replacement]'
+        return
+    endif
+
+    let [pat, replacement] = ['', '']
+    if len(a:args) > 0
+        let pat = a:args[0]
+    endif
+    if len(a:args) > 1
+        let replacement = a:args[1]
+    endif
+    if len(pat) == 0
+        echoerr 'LogaVim: LGIgnorePat <pattern> is empty!'
+        return
+    endif
+    let b:logavim__replace_pats += [[pat, replacement]]
+    call s:refreshFull()
 endfunction
 
-function! Logalize(bufnr, bufname, args) abort
+function! s:logalizeCmd(bufnr, bufname, args) abort
     if !exists('b:logavim_scheme')
         echoerr 'LogaVim: Logalize: b:logavim_scheme must be defined!'
         return
@@ -132,15 +163,19 @@ function! Logalize(bufnr, bufname, args) abort
     let b:logavim__noargs = !len(a:args)
     let b:logavim__scheme_name = getbufvar(a:bufnr, 'logavim_scheme')
     let b:logavim__orig_bufnr = a:bufnr
+    let b:logavim__replace_pats = exists('g:logavim_replacement_patterns') ?
+                \ g:logavim_replacement_patterns : []
+
 
     call s:populateUsingScheme(b:logavim__orig_bufnr,
-          \ lgv#registry#GetByName(b:logavim__scheme_name),
-          \ b:logavim__nocolor_list, b:logavim__noargs, 1)
+                \ lgv#registry#GetByName(b:logavim__scheme_name),
+                \ b:logavim__nocolor_list, b:logavim__noargs, 1)
 
     normal! ggddG
     setlocal nomodifiable readonly
     call setbufvar(a:bufnr, '&autoread', 1)
     execute "normal! \<C-w>_"
+    command -buffer -nargs=* LGReplace call s:replaceCmd([<f-args>])
 endfunction
 
 function! s:refreshFull() abort
@@ -148,8 +183,8 @@ function! s:refreshFull() abort
     call clearmatches()
     normal! gg"_dG
     call s:populateUsingScheme(b:logavim__orig_bufnr,
-          \ lgv#registry#GetByName(b:logavim__scheme_name),
-          \ b:logavim__nocolor_list, b:logavim__noargs, 1)
+            \ lgv#registry#GetByName(b:logavim__scheme_name),
+            \ b:logavim__nocolor_list, b:logavim__noargs, 1)
     normal! ggddG
     setlocal nomodifiable readonly
 endfunction
@@ -158,8 +193,8 @@ function! s:refreshAppend(linenr) abort
     normal! G
     setlocal modifiable noreadonly
     call s:populateUsingScheme(b:logavim__orig_bufnr,
-          \ lgv#registry#GetByName(b:logavim__scheme_name),
-          \ b:logavim__nocolor_list, b:logavim__noargs, a:linenr+1)
+            \ lgv#registry#GetByName(b:logavim__scheme_name),
+            \ b:logavim__nocolor_list, b:logavim__noargs, a:linenr+1)
     setlocal nomodifiable readonly
 endfunction
 
@@ -174,7 +209,7 @@ function! s:cursorHold() abort
         echomsg ''
     endif
   catch /.*/
-      echomsg 'LogaVim ERROR: ' . v:exception
+        echomsg 'LogaVim ERROR: ' . v:exception
   endtry
 endfunction
 
@@ -196,7 +231,7 @@ endfunction
 
 function! s:bufEnterEvent() abort
     let [upd, length] = s:checkUpdated(b:logavim__logalize_synclines,
-          \ b:logavim__orig_bufnr)
+            \ b:logavim__orig_bufnr)
     if upd == 2
         call s:refreshFull()
     elseif upd == 1
@@ -211,7 +246,7 @@ augroup LogaVim_Augroup
     au! FileChangedShellPost * if (exists('b:logavim__orig_bufnr'))| call s:bufEnterEvent() |endif
 augroup END
 
-comm! -nargs=* Logalize call Logalize(bufnr("%"), fnamemodify(expand("%"), ":t"), [<f-args>])
+comm! -nargs=* Logalize call s:logalizeCmd(bufnr("%"), fnamemodify(expand("%"), ":t"), [<f-args>])
 
 silent do LogaVim_User User LogaVimLoaded
 
