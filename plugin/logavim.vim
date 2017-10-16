@@ -108,7 +108,7 @@ function! s:populateUsingScheme(bufnr, scheme, nocolor_list, show_colors, linenr
     if len(a:nocolor_list) || a:show_colors
         let color_map = get(a:scheme, 'color_map', {})
         let sync_lines = s:populateFilterWithColor(a:bufnr, logpat, color_map,
-                \ shrink_maxlen, a:nocolor_list, a:linenr)
+                            \ shrink_maxlen, a:nocolor_list, a:linenr)
     else
         let sync_lines = s:populateFilteredLogs(a:bufnr, logpat, shrink_maxlen, a:linenr)
     endif
@@ -189,8 +189,8 @@ function! s:refreshFull() abort
     call clearmatches()
     normal! gg"_dG
     call s:populateUsingScheme(b:logavim__orig_bufnr,
-            \ lgv#registry#GetByName(b:logavim__scheme_name),
-            \ b:logavim__nocolor_list, b:logavim__noargs, 1)
+                \ lgv#registry#GetByName(b:logavim__scheme_name),
+                \ b:logavim__nocolor_list, b:logavim__noargs, 1)
     normal! ggddG
     setlocal nomodifiable readonly
 endfunction
@@ -207,16 +207,16 @@ endfunction
 function! s:cursorHold() abort
     try
         let linenr = line('.')
-    let line = getbufline(b:logavim__orig_bufnr, linenr, linenr)
-    let i = matchend(line[0], getbufvar(b:logavim__orig_bufnr, 'logavim_line_pattern'))
-    if i > 0
-        echomsg line[0]
-    else
-        echomsg ''
-    endif
-  catch /.*/
+        let line = getbufline(b:logavim__orig_bufnr, linenr, linenr)
+        let i = matchend(line[0], getbufvar(b:logavim__orig_bufnr, 'logavim_line_pattern'))
+        if i > 0
+            echomsg line[0]
+        else
+            echomsg ''
+        endif
+    catch /.*/
         echomsg 'LogaVim ERROR: ' . v:exception
-  endtry
+    endtry
 endfunction
 
 function! s:checkUpdated(sync_lines, bufnr) abort
@@ -226,7 +226,7 @@ function! s:checkUpdated(sync_lines, bufnr) abort
         return [2, len_orig]
     endif
     if a:sync_lines[0] !=# getbufline(a:bufnr, 1, 1)[0]
-          \ || a:sync_lines[1] !=# getbufline(a:bufnr, len_logalize, len_logalize)[0]
+            \ || a:sync_lines[1] !=# getbufline(a:bufnr, len_logalize, len_logalize)[0]
         return [2, len_orig]
     endif
     if len_orig == len_logalize
