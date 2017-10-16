@@ -137,30 +137,36 @@ function! s:replaceCmd(args) abort
 endfunction
 
 function! s:logalizeCmd(bufnr, bufname, args) abort
-    if !exists('b:logavim_scheme')
-        echoerr 'LogaVim: Logalize: b:logavim_scheme must be defined!'
-        return
-    endif
-    if len(a:args) > 1
-        echoerr 'LogaVim: Logalize accepts one argument: -nocolor[=*|COL0,COL1,..]'
-        return
-    endif
-    if len(a:args) > 0 && a:args[0] !~# '^-nocolor'
-        echoerr 'LogaVim: Logalize argument is: -nocolor[=*|COL0,COL1,..]'
-        return
-    endif
-
-    let arg0 = ''
-    if len(a:args) > 0
-        let arg0 = a:args[0][8:]
-        if arg0[0] ==# '='
-            let arg0 = arg0[1:]
+    let [nocolor_arg, scheme_arg] = ['', '']
+    for arg in a:args
+        if arg =~# '^-nocolor'
+            let nocolor_arg = arg
+        elseif arg =~# '^-'
+            echoerr 'LogaVim: Logalize [<scheme>] [-nocolor[=*|COL0,COL1,..]]'
+            return
+        else
+            let scheme_arg = arg
+            unlet! b:logavim_scheme
         endif
+    endfor
+
+    if !exists('b:logavim_scheme')
+        if scheme_arg ==# ''
+            echoerr 'LogaVim: Logalize: Either b:logavim_scheme must be defined or
+                        \ scheme argument passed!'
+            return
+        else
+            let b:logavim_scheme = scheme_arg
+        endif
+    endif
+    if !lgv#registry#Exists(b:logavim_scheme)
+        echoerr 'LogaVim: Logalize: Scheme "' . b:logavim_scheme . '" not found'
+        return
     endif
 
     call s:splitNewBuf('logalized_' . a:bufname)
-    let b:logavim__nocolor_list = split(arg0, ',')
-    let b:logavim__noargs = !len(a:args)
+    let b:logavim__nocolor_list = split(nocolor_arg[8:], ',')
+    let b:logavim__noargs = !len(nocolor_arg)
     let b:logavim__scheme_name = getbufvar(a:bufnr, 'logavim_scheme')
     let b:logavim__orig_bufnr = a:bufnr
     let b:logavim__replace_pats = exists('g:logavim_replacement_patterns') ?
