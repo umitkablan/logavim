@@ -47,6 +47,14 @@ augroup LogaVim_Schemes_LocalDefs
 augroup END
 ```
 
+Feed Scheme Name Manually
+-------------------------
+At above example `b:logavim_scheme` is automatically filled with the scheme name to interpret the lines. However, it's also possible to pass scheme name manually with `:Logalize` command. For example to interpret a boot.log file differently - let's make a fiction scheme 'dblog':
+```vim
+:Logalize dblog
+```
+So, practically, you could define schemes with no automatic attachment to file-path pattern.
+
 Shrinking Long Lines
 --------------------
 If you want to shrink long lines you could add `'shrink_maxlen'` attribute to the scheme dictionary. This will crop long lines and append `...` to the end as a marker.
