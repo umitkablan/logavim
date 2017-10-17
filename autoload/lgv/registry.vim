@@ -7,11 +7,11 @@ let s:lgv_registry = {}
 
 function! lgv#registry#Add(name, def) abort
     if has_key(s:lgv_registry, a:name)
-        echomsg 'LogaVim: Registry: ' . a:name . ' is already registered!'
+        echoerr 'LogaVim: Registry: ' . a:name . ' is already registered!'
         return
     endif
     if !len(a:name)
-        echomsg 'LogaVim: Registry: No empty name!'
+        echoerr 'LogaVim: Registry: No empty name!'
         return
     endif
     let s:lgv_registry[a:name] = a:def
@@ -21,3 +21,6 @@ function! lgv#registry#GetByName(name) abort
     return s:lgv_registry[a:name]
 endfunction
 
+function! lgv#registry#Exists(name) abort
+    return has_key(s:lgv_registry, a:name)
+endfunction
