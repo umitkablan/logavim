@@ -53,9 +53,29 @@ function! s:filterOutPats(pats, line) abort
     return ret
 endfunction
 
-function! s:populateLogsNoColor(bufnr, pat, shrink_maxlen, linenr) abort
+function! s:getSimilarity(lnnr, line) abort
+    if a:lnnr == 0
+        return 0.0
+    endif
+    let [cnt, length] = [0, len(a:line)]
+    let line_prev = getline(a:lnnr, a:lnnr)[0]
+    if len(line_prev) != length
+        return 0.0
+    endif
+    for i in range(1, length)
+        if a:line[i] ==# line_prev[i]
+            let cnt += 1
+        endif
+    endfor
+    return (cnt*1.0 / length*1.0) * 100.0
+endfunction
+
+function! s:populateLogsNoColor(bufnr, pat, shrink_maxlen, linenr,
+            \ similarity_threshold, repetition_threshold) abort
     let lines = getbufline(a:bufnr, a:linenr, '$')
+    let [line_num, diff_start] = [a:linenr - 1, a:linenr - 1]
     for line in lines
+        let line_num = line_num + 1
         let i = matchend(line, a:pat)
         let cropped_line = line
         if i > 0
@@ -65,14 +85,25 @@ function! s:populateLogsNoColor(bufnr, pat, shrink_maxlen, linenr) abort
         if a:shrink_maxlen > 0 && len(cropped_line) > a:shrink_maxlen
             let cropped_line = cropped_line[0:a:shrink_maxlen] . '...'
         endif
+        if s:getSimilarity(line_num-1, cropped_line) < a:similarity_threshold
+            let diff_start = line_num - diff_start
+            if diff_start > a:repetition_threshold
+                execute 'normal! zf' . diff_start . 'kG'
+            endif
+            let diff_start = line_num
+        endif
         put=cropped_line
     endfor
+    let diff_start = line_num - diff_start + 1
+    if diff_start > a:repetition_threshold
+        execute 'normal! zf' . diff_start . 'kG'
+    endif
     return [lines[0], lines[len(lines)-1]]
 endfunction
 
 function! s:populateLogsWithColor(bufnr, pat, color_map, shrink_maxlen,
-                \ nocolor_list, linenr) abort
-    let line_num = a:linenr - 1
+            \ nocolor_list, linenr, similarity_threshold, repetition_threshold) abort
+    let [line_num, diff_start] = [a:linenr - 1, a:linenr - 1]
     let lines = getbufline(a:bufnr, a:linenr, '$')
     for line in lines
         let line_num = line_num + 1
@@ -85,6 +116,13 @@ function! s:populateLogsWithColor(bufnr, pat, color_map, shrink_maxlen,
         if a:shrink_maxlen > 0 && len(cropped_line) > a:shrink_maxlen
             let cropped_line = cropped_line[0:a:shrink_maxlen] . '...'
         endif
+        if s:getSimilarity(line_num-1, cropped_line) < a:similarity_threshold
+            let diff_start = line_num - diff_start
+            if diff_start > a:repetition_threshold
+                execute 'normal! zf' . diff_start . 'kG'
+            endif
+            let diff_start = line_num
+        endif
         put=cropped_line
         if len(mm) < 2
             continue
@@ -95,6 +133,10 @@ function! s:populateLogsWithColor(bufnr, pat, color_map, shrink_maxlen,
         endif
         call matchaddpos(color_name, [line_num])
     endfor
+    let diff_start = line_num - diff_start + 1
+    if diff_start > a:repetition_threshold
+        execute 'normal! zf' . diff_start . 'kG'
+    endif
     return [lines[0], lines[len(lines)-1]]
 endfunction
 
@@ -108,9 +150,12 @@ function! s:populateUsingScheme(bufnr, scheme, nocolor_list, show_colors, linenr
     if len(a:nocolor_list) || a:show_colors
         let color_map = get(a:scheme, 'color_map', {})
         let sync_lines = s:populateLogsWithColor(a:bufnr, logpat, color_map,
-                            \ shrink_maxlen, a:nocolor_list, a:linenr)
+                            \ shrink_maxlen, a:nocolor_list, a:linenr,
+                            \ g:logavim_similarity_threshold, g:logavim_repetition_threshold)
     else
-        let sync_lines = s:populateLogsNoColor(a:bufnr, logpat, shrink_maxlen, a:linenr)
+        let sync_lines = s:populateLogsNoColor(a:bufnr, logpat, shrink_maxlen, a:linenr, 
+                            \ g:logavim_similarity_threshold, g:logavim_repetition_threshold)
+
     endif
     let b:logavim__logalize_synclines = sync_lines
 endfunction
@@ -162,6 +207,13 @@ function! s:logalizeCmd(bufnr, bufname, args) abort
     if !lgv#registry#Exists(b:logavim_scheme)
         echoerr 'LogaVim: Logalize: Scheme "' . b:logavim_scheme . '" not found'
         return
+    endif
+
+    if !exists('g:logavim_similarity_threshold')
+        let g:logavim_similarity_threshold = 92.0
+    endif
+    if !exists('g:logavim_repetition_threshold')
+        let g:logavim_repetition_threshold = 3
     endif
 
     call s:splitNewBuf('logalized_' . a:bufname)
