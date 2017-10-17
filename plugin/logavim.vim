@@ -53,7 +53,7 @@ function! s:filterOutPats(pats, line) abort
     return ret
 endfunction
 
-function! s:populateFilteredLogs(bufnr, pat, shrink_maxlen, linenr) abort
+function! s:populateLogsNoColor(bufnr, pat, shrink_maxlen, linenr) abort
     let lines = getbufline(a:bufnr, a:linenr, '$')
     for line in lines
         let i = matchend(line, a:pat)
@@ -70,7 +70,7 @@ function! s:populateFilteredLogs(bufnr, pat, shrink_maxlen, linenr) abort
     return [lines[0], lines[len(lines)-1]]
 endfunction
 
-function! s:populateFilterWithColor(bufnr, pat, color_map, shrink_maxlen,
+function! s:populateLogsWithColor(bufnr, pat, color_map, shrink_maxlen,
                 \ nocolor_list, linenr) abort
     let line_num = a:linenr - 1
     let lines = getbufline(a:bufnr, a:linenr, '$')
@@ -107,10 +107,10 @@ function! s:populateUsingScheme(bufnr, scheme, nocolor_list, show_colors, linenr
     call setbufvar(a:bufnr, 'logavim_line_pattern', logpat)
     if len(a:nocolor_list) || a:show_colors
         let color_map = get(a:scheme, 'color_map', {})
-        let sync_lines = s:populateFilterWithColor(a:bufnr, logpat, color_map,
+        let sync_lines = s:populateLogsWithColor(a:bufnr, logpat, color_map,
                             \ shrink_maxlen, a:nocolor_list, a:linenr)
     else
-        let sync_lines = s:populateFilteredLogs(a:bufnr, logpat, shrink_maxlen, a:linenr)
+        let sync_lines = s:populateLogsNoColor(a:bufnr, logpat, shrink_maxlen, a:linenr)
     endif
     let b:logavim__logalize_synclines = sync_lines
 endfunction
