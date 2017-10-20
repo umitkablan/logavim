@@ -305,9 +305,10 @@ augroup LogaVim_Augroup
 augroup END
 
 function! s:completeLogalize(argLead, cmdLine, cursorPos) abort
-    if a:argLead || a:cmdLine || a:cursorPos
+    if !a:cmdLine || a:cursorPos
     endif
-    return lgv#registry#GetAllNames() + ['-nocolor']
+    let llall = lgv#registry#GetAllNames() + ['-nocolor']
+    return filter(llall, 'v:val =~# "^' . a:argLead .'"')
 endfunction
 
 command! -nargs=* -complete=customlist,s:completeLogalize Logalize
