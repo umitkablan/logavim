@@ -304,7 +304,14 @@ augroup LogaVim_Augroup
     au! FileChangedShellPost * if (exists('b:logavim__orig_bufnr'))| call s:bufEnterEvent() |endif
 augroup END
 
-comm! -nargs=* Logalize call s:logalizeCmd(bufnr("%"), fnamemodify(expand("%"), ":t"), [<f-args>])
+function! s:completeLogalize(argLead, cmdLine, cursorPos) abort
+    if a:argLead || a:cmdLine || a:cursorPos
+    endif
+    return lgv#registry#GetAllNames() + ['-nocolor']
+endfunction
+
+command! -nargs=* -complete=customlist,s:completeLogalize Logalize
+            \ call s:logalizeCmd(bufnr("%"), fnamemodify(expand("%"), ":t"), [<f-args>])
 
 silent do LogaVim_User User LogaVimLoaded
 
