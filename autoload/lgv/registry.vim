@@ -24,3 +24,7 @@ endfunction
 function! lgv#registry#Exists(name) abort
     return has_key(s:lgv_registry, a:name)
 endfunction
+
+function! lgv#registry#GetAllNames() abort
+    return keys(s:lgv_registry)
+endfunction
