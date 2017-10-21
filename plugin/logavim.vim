@@ -13,7 +13,7 @@ endfunction
 
 function! s:replaceCmd(args) abort
     if len(a:args) == 0 || len(a:args) > 2
-        echoerr 'LogaVim: LGIgnorePat usage: <pattern> [<replacement]'
+        echoerr 'LogaVim: LGReplace usage: <pattern> [<replacement]'
         return
     endif
 
@@ -25,7 +25,7 @@ function! s:replaceCmd(args) abort
         let replacement = a:args[1]
     endif
     if len(pat) == 0
-        echoerr 'LogaVim: LGIgnorePat <pattern> is empty!'
+        echoerr 'LogaVim: LGReplace <pattern> is empty!'
         return
     endif
     let b:logavim__replace_pats += [[pat, replacement]]
