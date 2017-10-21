@@ -81,3 +81,7 @@ let g:logavim_replacement_patterns = [
     \ ]
 ```
 
+Folding Annoying Block Repetitions
+----------------------------
+LogaVim not only folds consecutive similar lines (`g:logavim_similarity_threshold`) but also similar blocks with _visual mode_ `:LGFoldSimilar` command usable in `logalized buffer`. After selecting sample block, the command will scan the buffer and fold all blocks resembling to this block.
+

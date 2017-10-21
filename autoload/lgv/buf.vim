@@ -98,6 +98,23 @@ function! lgv#buf#ScanFold(linenr, similarity_threshold, repetition_threshold) a
     endif
 endfunction
 
+function! lgv#buf#ScanSimilarsFold(similars_arr, linenr) abort
+    let lines = getline(a:linenr, '$')
+    for [sim_lines, threshold] in a:similars_arr
+        let [leng, ln, all_length] = [len(sim_lines)-1, 0, len(lines)]
+        while 1
+            if ln + leng >= all_length
+                break
+            endif
+            if s:isLinesSimilar(sim_lines, lines[ln : ln+leng], threshold)
+                execute 'normal! ' . (ln+a:linenr) . 'Gzf' . leng . 'jj'
+                let ln += leng
+            endif
+            let ln += 1
+        endwhile
+    endfor
+endfunction
+
 function! lgv#buf#PopulateLogsNoColor(bufnr, pat, shrink_maxlen, linenr, replace_pats) abort
     let lines = getbufline(a:bufnr, a:linenr, '$')
     let line_num = a:linenr - 1
@@ -190,5 +207,19 @@ function! s:calcSimilarity(ln0, ln1) abort
         endif
     endfor
     return (cnt*1.0 / length*1.0) * 100.0
+endfunction
+
+function! s:isLinesSimilar(lines0, lines1, threshold) abort
+    let [cnt, length] = [0, len(a:lines0)]
+    if length != len(a:lines1)
+        return 0
+    endif
+    for i in range(length)
+        if s:calcSimilarity(a:lines0[i], a:lines1[i]) < a:threshold
+            break
+        endif
+        let cnt += 1
+    endfor
+    return cnt == length
 endfunction
 

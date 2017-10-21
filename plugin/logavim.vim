@@ -33,6 +33,16 @@ function! s:replaceCmd(args) abort
                     \ b:logavim__nocolor_list, b:logavim__noargs, b:logavim__replace_pats)
 endfunction
 
+function! s:foldSimilarCmd(ln1, ln2) abort
+    if a:ln2 - a:ln1 < 1
+        echoerr 'LogaVim: LGFoldSimilar must fold more than 1 line'
+        return
+    endif
+    let lines = getline(a:ln1, a:ln2)
+    let b:logavim__fold_similars += [[lines, g:logavim_similarity_threshold]]
+    call lgv#buf#ScanSimilarsFold(b:logavim__fold_similars, 1)
+endfunction
+
 function! s:logalizeCmd(bufnr, bufname, args) abort
     let [nocolor_arg, scheme_arg] = ['', '']
     for arg in a:args
@@ -88,6 +98,7 @@ function! s:logalizeCmd(bufnr, bufname, args) abort
     execute "normal! \<C-w>_"
 
     command -buffer -nargs=* LGReplace call s:replaceCmd([<f-args>])
+    command -buffer -range   LGFoldSimilar call s:foldSimilarCmd(<line1>, <line2>)
 endfunction
 
 function! s:cursorHold() abort
