@@ -13,13 +13,12 @@ function! lgv#buf#PopulateUsingScheme(bufnr, scheme, nocolor_list, show_colors, 
     if len(a:nocolor_list) || a:show_colors
         let color_map = get(a:scheme, 'color_map', {})
         let sync_lines = lgv#buf#PopulateLogsWithColor(a:bufnr, logpat, color_map,
-                                \ shrink_maxlen, a:nocolor_list, a:linenr, a:replace_pats,
-                                \ g:logavim_similarity_threshold, g:logavim_repetition_threshold)
+                                \ shrink_maxlen, a:nocolor_list, a:linenr, a:replace_pats)
     else
-        let sync_lines = lgv#buf#PopulateLogsNoColor(a:bufnr, logpat, shrink_maxlen, a:linenr,
-                \ a:replace_pats, g:logavim_similarity_threshold, g:logavim_repetition_threshold)
+        let sync_lines = lgv#buf#PopulateLogsNoColor(a:bufnr, logpat, shrink_maxlen, a:linenr, a:replace_pats)
 
     endif
+    call lgv#buf#ScanFold(a:linenr, g:logavim_similarity_threshold, g:logavim_repetition_threshold)
     return sync_lines
 endfunction
 
@@ -82,10 +81,28 @@ function! lgv#buf#GetSimilarity(lnnr, line) abort
     return (cnt*1.0 / length*1.0) * 100.0
 endfunction
 
-function! lgv#buf#PopulateLogsNoColor(bufnr, pat, shrink_maxlen, linenr, replace_pats,
-            \ similarity_threshold, repetition_threshold) abort
+function! lgv#buf#ScanFold(linenr, similarity_threshold, repetition_threshold) abort
+    let [line_num, diff_start] = [a:linenr - 1, a:linenr]
+    let lines = getline(a:linenr, '$')
+    for line in lines
+        let line_num = line_num + 1
+        if lgv#buf#GetSimilarity(line_num - 1, line) < a:similarity_threshold
+            let diff_start = line_num - diff_start - 1
+            if diff_start > a:repetition_threshold
+                execute 'normal! ' . (line_num-1) . 'Gzf' . diff_start . 'kj'
+            endif
+            let diff_start = line_num
+        endif
+    endfor
+    let diff_start = line_num - diff_start
+    if diff_start > a:repetition_threshold
+        execute 'normal! Gzf' . diff_start . 'kG'
+    endif
+endfunction
+
+function! lgv#buf#PopulateLogsNoColor(bufnr, pat, shrink_maxlen, linenr, replace_pats) abort
     let lines = getbufline(a:bufnr, a:linenr, '$')
-    let [line_num, diff_start] = [a:linenr - 1, a:linenr - 1]
+    let line_num = a:linenr - 1
     for line in lines
         let line_num = line_num + 1
         let i = matchend(line, a:pat)
@@ -97,25 +114,14 @@ function! lgv#buf#PopulateLogsNoColor(bufnr, pat, shrink_maxlen, linenr, replace
         if a:shrink_maxlen > 0 && len(cropped_line) > a:shrink_maxlen
             let cropped_line = cropped_line[0:a:shrink_maxlen] . '...'
         endif
-        if lgv#buf#GetSimilarity(line_num-1, cropped_line) < a:similarity_threshold
-            let diff_start = line_num - diff_start
-            if diff_start > a:repetition_threshold
-                execute 'normal! zf' . diff_start . 'kG'
-            endif
-            let diff_start = line_num
-        endif
         put=cropped_line
     endfor
-    let diff_start = line_num - diff_start + 1
-    if diff_start > a:repetition_threshold
-        execute 'normal! zf' . diff_start . 'kG'
-    endif
     return [lines[0], lines[len(lines)-1]]
 endfunction
 
-function! lgv#buf#PopulateLogsWithColor(bufnr, pat, color_map, shrink_maxlen, nocolor_list, linenr,
-            \ replace_pats, similarity_threshold, repetition_threshold) abort
-    let [line_num, diff_start] = [a:linenr - 1, a:linenr - 1]
+function! lgv#buf#PopulateLogsWithColor(bufnr, pat, color_map, shrink_maxlen, nocolor_list,
+                                    \ linenr, replace_pats) abort
+    let line_num = a:linenr - 1
     let lines = getbufline(a:bufnr, a:linenr, '$')
     for line in lines
         let line_num = line_num + 1
@@ -128,13 +134,6 @@ function! lgv#buf#PopulateLogsWithColor(bufnr, pat, color_map, shrink_maxlen, no
         if a:shrink_maxlen > 0 && len(cropped_line) > a:shrink_maxlen
             let cropped_line = cropped_line[0:a:shrink_maxlen] . '...'
         endif
-        if lgv#buf#GetSimilarity(line_num-1, cropped_line) < a:similarity_threshold
-            let diff_start = line_num - diff_start
-            if diff_start > a:repetition_threshold
-                execute 'normal! zf' . diff_start . 'kG'
-            endif
-            let diff_start = line_num
-        endif
         put=cropped_line
         if len(mm) < 2
             continue
@@ -145,10 +144,6 @@ function! lgv#buf#PopulateLogsWithColor(bufnr, pat, color_map, shrink_maxlen, no
         endif
         call matchaddpos(color_name, [line_num])
     endfor
-    let diff_start = line_num - diff_start + 1
-    if diff_start > a:repetition_threshold
-        execute 'normal! zf' . diff_start . 'kG'
-    endif
     return [lines[0], lines[len(lines)-1]]
 endfunction
 
