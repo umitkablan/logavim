@@ -28,9 +28,11 @@ function! s:replaceCmd(args) abort
         echoerr 'LogaVim: LGReplace <pattern> is empty!'
         return
     endif
+
     let b:logavim__replace_pats += [[pat, replacement]]
-    call lgv#buf#RefreshFull(b:logavim__orig_bufnr, b:logavim__scheme_name,
-                    \ b:logavim__nocolor_list, b:logavim__noargs, b:logavim__replace_pats)
+    let b:logavim__logalize_synclines =
+        \ lgv#buf#RefreshFull(b:logavim__orig_bufnr, b:logavim__scheme_name,
+            \ b:logavim__nocolor_list, b:logavim__noargs, b:logavim__replace_pats)
 endfunction
 
 function! s:foldSimilarCmd(ln1, ln2) abort
@@ -40,7 +42,8 @@ function! s:foldSimilarCmd(ln1, ln2) abort
     endif
     let lines = getline(a:ln1, a:ln2)
     let b:logavim__fold_similars += [[lines, g:logavim_similarity_threshold]]
-    call lgv#buf#ScanSimilarsFold(b:logavim__fold_similars, 1)
+    call lgv#fold#ScanFull(1, g:logavim_similarity_threshold,
+                \ g:logavim_repetition_threshold, b:logavim__fold_similars)
 endfunction
 
 function! s:logalizeCmd(bufnr, bufname, args) abort
@@ -94,6 +97,8 @@ function! s:logalizeCmd(bufnr, bufname, args) abort
                 \ lgv#buf#Populate(b:logavim__orig_bufnr, b:logavim__scheme_name,
                                 \ b:logavim__nocolor_list, b:logavim__noargs,
                                 \ b:logavim__replace_pats)
+    call lgv#fold#ScanFull(1, g:logavim_similarity_threshold,
+                    \ g:logavim_repetition_threshold, b:logavim__fold_similars)
     call setbufvar(b:logavim__orig_bufnr, '&autoread', 1)
     execute "normal! \<C-w>_"
 
@@ -124,11 +129,15 @@ function! s:bufEnterEvent() abort
                     \ lgv#buf#RefreshFull(b:logavim__orig_bufnr,
                             \ b:logavim__scheme_name, b:logavim__nocolor_list,
                             \ b:logavim__noargs, b:logavim__replace_pats)
+        call lgv#fold#ScanFull(1, g:logavim_similarity_threshold,
+                    \ g:logavim_repetition_threshold, b:logavim__fold_similars)
     elseif upd == 1
         let b:logavim__logalize_synclines =
                     \ lgv#buf#RefreshAppend(b:logavim__orig_bufnr, length,
                             \ b:logavim__scheme_name, b:logavim__nocolor_list,
                             \ b:logavim__noargs, b:logavim__replace_pats)
+        call lgv#fold#ScanFull(length, g:logavim_similarity_threshold,
+                    \ g:logavim_repetition_threshold, b:logavim__fold_similars)
     endif
 endfunction
 
