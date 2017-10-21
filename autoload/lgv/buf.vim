@@ -38,22 +38,36 @@ function! lgv#buf#CheckUpdated(sync_lines, bufnr) abort
     return [1, len_logalize]
 endfunction
 
-function! lgv#buf#RefreshFull(orig_bufnr, scheme_name, nocolor_list, is_noargs, replace_pats) abort
+function! lgv#buf#Populate(orig_bufnr, scheme_name, nocolor_list, is_noargs,
+                        \ replace_pats) abort
+    let ret = lgv#buf#PopulateUsingScheme(a:orig_bufnr,
+                    \ lgv#registry#GetByName(a:scheme_name), a:nocolor_list,
+                    \ a:is_noargs, 1, a:replace_pats)
+    setlocal nomodifiable readonly
+    return ret
+endfunction
+
+function! lgv#buf#RefreshFull(orig_bufnr, scheme_name, nocolor_list, is_noargs,
+                            \ replace_pats) abort
     setlocal modifiable noreadonly
     call clearmatches()
     normal! gg"_dG
-    call lgv#buf#PopulateUsingScheme(a:orig_bufnr, lgv#registry#GetByName(a:scheme_name),
-                                    \ a:nocolor_list, a:is_noargs, 1, a:replace_pats)
-    normal! ggddG
+    let ret = lgv#buf#PopulateUsingScheme(a:orig_bufnr,
+                    \ lgv#registry#GetByName(a:scheme_name), a:nocolor_list,
+                    \ a:is_noargs, 1, a:replace_pats)
     setlocal nomodifiable readonly
+    return ret
 endfunction
 
-function! lgv#buf#RefreshAppend(orig_bufnr, linenr, scheme_name, nocolor_list, is_noargs, replace_pats) abort
+function! lgv#buf#RefreshAppend(orig_bufnr, linenr, scheme_name, nocolor_list,
+                            \ is_noargs, replace_pats) abort
     normal! G
     setlocal modifiable noreadonly
-    call lgv#buf#PopulateUsingScheme(a:orig_bufnr, lgv#registry#GetByName(a:scheme_name),
-                                    \ a:nocolor_list, a:is_noargs, a:linenr+1, a:replace_pats)
+    let ret = lgv#buf#PopulateUsingScheme(a:orig_bufnr,
+                    \ lgv#registry#GetByName(a:scheme_name), a:nocolor_list,
+                    \ a:is_noargs, a:linenr+1, a:replace_pats)
     setlocal nomodifiable readonly
+    return ret
 endfunction
 
 function! lgv#buf#FilterOutPats(pats, line) abort
@@ -64,35 +78,19 @@ function! lgv#buf#FilterOutPats(pats, line) abort
     return ret
 endfunction
 
-function! lgv#buf#GetSimilarity(lnnr, line) abort
-    if a:lnnr == 0
-        return 0.0
-    endif
-    let [cnt, length] = [0, len(a:line)]
-    let line_prev = getline(a:lnnr, a:lnnr)[0]
-    if len(line_prev) != length
-        return 0.0
-    endif
-    for i in range(1, length)
-        if a:line[i] ==# line_prev[i]
-            let cnt += 1
-        endif
-    endfor
-    return (cnt*1.0 / length*1.0) * 100.0
-endfunction
-
 function! lgv#buf#ScanFold(linenr, similarity_threshold, repetition_threshold) abort
-    let [line_num, diff_start] = [a:linenr - 1, a:linenr]
+    let [line_num, diff_start] = [a:linenr-1, a:linenr]
     let lines = getline(a:linenr, '$')
     for line in lines
-        let line_num = line_num + 1
-        if lgv#buf#GetSimilarity(line_num - 1, line) < a:similarity_threshold
-            let diff_start = line_num - diff_start - 1
+        if line_num < 1 ||
+        \ s:calcSimilarity(line, lines[line_num-a:linenr]) < a:similarity_threshold
+            let diff_start = line_num - diff_start
             if diff_start > a:repetition_threshold
-                execute 'normal! ' . (line_num-1) . 'Gzf' . diff_start . 'kj'
+                execute 'normal! ' . line_num . 'Gzf' . diff_start . 'kj'
             endif
-            let diff_start = line_num
+            let diff_start = line_num + 1
         endif
+        let line_num = line_num + 1
     endfor
     let diff_start = line_num - diff_start
     if diff_start > a:repetition_threshold
@@ -108,7 +106,7 @@ function! lgv#buf#PopulateLogsNoColor(bufnr, pat, shrink_maxlen, linenr, replace
         let i = matchend(line, a:pat)
         let cropped_line = line
         if i > 0
-            let cropped_line = line[i:]
+            let cropped_line = line[i :]
         endif
         let cropped_line = lgv#buf#FilterOutPats(a:replace_pats, cropped_line)
         if a:shrink_maxlen > 0 && len(cropped_line) > a:shrink_maxlen
@@ -179,5 +177,18 @@ function! s:parseLoglineToPattern(logln, dict, color_section) abort
         let index_start = index_end + diff " + 1
     endwhile
     return logline
+endfunction
+
+function! s:calcSimilarity(ln0, ln1) abort
+    let [cnt, length] = [0, len(a:ln0)]
+    if len(a:ln1) != length
+        return 0.0
+    endif
+    for i in range(length)
+        if a:ln0[i] ==# a:ln1[i]
+            let cnt += 1
+        endif
+    endfor
+    return (cnt*1.0 / length*1.0) * 100.0
 endfunction
 

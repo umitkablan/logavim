@@ -79,15 +79,14 @@ function! s:logalizeCmd(bufnr, bufname, args) abort
     let b:logavim__orig_bufnr = a:bufnr
     let b:logavim__replace_pats = exists('g:logavim_replacement_patterns') ?
                 \ g:logavim_replacement_patterns : []
-
-    let b:logavim__logalize_synclines = lgv#buf#PopulateUsingScheme(b:logavim__orig_bufnr,
-                        \ lgv#registry#GetByName(b:logavim__scheme_name), b:logavim__nocolor_list,
-                        \ b:logavim__noargs, 1, b:logavim__replace_pats)
-
-    normal! ggddG
-    setlocal nomodifiable readonly
-    call setbufvar(a:bufnr, '&autoread', 1)
+    let b:logavim__fold_similars = []
+    let b:logavim__logalize_synclines =
+                \ lgv#buf#Populate(b:logavim__orig_bufnr, b:logavim__scheme_name,
+                                \ b:logavim__nocolor_list, b:logavim__noargs,
+                                \ b:logavim__replace_pats)
+    call setbufvar(b:logavim__orig_bufnr, '&autoread', 1)
     execute "normal! \<C-w>_"
+
     command -buffer -nargs=* LGReplace call s:replaceCmd([<f-args>])
 endfunction
 
@@ -107,13 +106,18 @@ function! s:cursorHold() abort
 endfunction
 
 function! s:bufEnterEvent() abort
-    let [upd, length] = lgv#buf#CheckUpdated(b:logavim__logalize_synclines, b:logavim__orig_bufnr)
+    let [upd, length] = lgv#buf#CheckUpdated(b:logavim__logalize_synclines,
+                                        \ b:logavim__orig_bufnr)
     if upd == 2
-        call lgv#buf#RefreshFull(b:logavim__orig_bufnr, b:logavim__scheme_name,
-                            \ b:logavim__nocolor_list, b:logavim__noargs, b:logavim__replace_pats)
+        let b:logavim__logalize_synclines =
+                    \ lgv#buf#RefreshFull(b:logavim__orig_bufnr,
+                            \ b:logavim__scheme_name, b:logavim__nocolor_list,
+                            \ b:logavim__noargs, b:logavim__replace_pats)
     elseif upd == 1
-        call lgv#buf#RefreshAppend(b:logavim__orig_bufnr, length, b:logavim__scheme_name,
-                            \ b:logavim__nocolor_list, b:logavim__noargs, b:logavim__replace_pats)
+        let b:logavim__logalize_synclines =
+                    \ lgv#buf#RefreshAppend(b:logavim__orig_bufnr, length,
+                            \ b:logavim__scheme_name, b:logavim__nocolor_list,
+                            \ b:logavim__noargs, b:logavim__replace_pats)
     endif
 endfunction
 
