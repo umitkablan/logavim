@@ -9,6 +9,7 @@ function! s:splitNewBuf(bufname) abort
     setlocal buftype=nofile bufhidden=delete noswapfile nobuflisted
     setlocal modifiable noreadonly
     setlocal foldmethod=manual foldcolumn=0
+    setlocal nospell
 endfunction
 
 function! s:replaceCmd(args) abort
