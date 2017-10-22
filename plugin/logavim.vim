@@ -44,7 +44,15 @@ function! s:foldSimilarCmd(ln1, ln2) abort
     let lines = getline(a:ln1, a:ln2)
     let b:logavim__fold_similars += [[lines, g:logavim_similarity_threshold]]
     call lgv#fold#ScanFull(1, g:logavim_similarity_threshold,
-                \ g:logavim_repetition_threshold, b:logavim__fold_similars)
+                \ g:logavim_repetition_threshold, b:logavim__fold_similars,
+                \ b:logavim__fold_similars)
+endfunction
+
+function! s:foldRegexpCmd(regexp) abort
+    let b:logavim__fold_regexps += [a:regexp]
+    call lgv#fold#ScanFull(1, g:logavim_similarity_threshold,
+                \ g:logavim_repetition_threshold, b:logavim__fold_similars,
+                \ b:logavim__fold_regexps)
 endfunction
 
 function! s:logalizeCmd(bufnr, bufname, args) abort
@@ -94,17 +102,22 @@ function! s:logalizeCmd(bufnr, bufname, args) abort
     let b:logavim__replace_pats = exists('g:logavim_replacement_patterns') ?
                 \ g:logavim_replacement_patterns : []
     let b:logavim__fold_similars = []
+    let b:logavim__fold_regexps = get(
+                            \ lgv#registry#GetByName(b:logavim__scheme_name),
+                            \ 'fold_patterns', [])
     let b:logavim__logalize_synclines =
                 \ lgv#buf#Populate(b:logavim__orig_bufnr, b:logavim__scheme_name,
                                 \ b:logavim__nocolor_list, b:logavim__noargs,
                                 \ b:logavim__replace_pats)
     call lgv#fold#ScanFull(1, g:logavim_similarity_threshold,
-                    \ g:logavim_repetition_threshold, b:logavim__fold_similars)
+                    \ g:logavim_repetition_threshold, b:logavim__fold_similars,
+                    \ b:logavim__fold_regexps)
     call setbufvar(b:logavim__orig_bufnr, '&autoread', 1)
     execute "normal! \<C-w>_"
 
     command -buffer -nargs=* LGReplace call s:replaceCmd([<f-args>])
     command -buffer -range   LGFoldSimilar call s:foldSimilarCmd(<line1>, <line2>)
+    command -buffer -nargs=1 LGFoldRegexp call s:foldRegexpCmd(<q-args>)
 endfunction
 
 function! s:cursorHold() abort
@@ -131,14 +144,16 @@ function! s:bufEnterEvent() abort
                             \ b:logavim__scheme_name, b:logavim__nocolor_list,
                             \ b:logavim__noargs, b:logavim__replace_pats)
         call lgv#fold#ScanFull(1, g:logavim_similarity_threshold,
-                    \ g:logavim_repetition_threshold, b:logavim__fold_similars)
+                    \ g:logavim_repetition_threshold, b:logavim__fold_similars,
+                    \ b:logavim__fold_regexps)
     elseif upd == 1
         let b:logavim__logalize_synclines =
                     \ lgv#buf#RefreshAppend(b:logavim__orig_bufnr, length,
                             \ b:logavim__scheme_name, b:logavim__nocolor_list,
                             \ b:logavim__noargs, b:logavim__replace_pats)
         call lgv#fold#ScanFull(length, g:logavim_similarity_threshold,
-                    \ g:logavim_repetition_threshold, b:logavim__fold_similars)
+                    \ g:logavim_repetition_threshold, b:logavim__fold_similars,
+                    \ b::logavim__fold_regexps)
     endif
 endfunction
 
