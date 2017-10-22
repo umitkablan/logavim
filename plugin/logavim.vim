@@ -55,8 +55,8 @@ function! s:foldRegexpCmd(regexp) abort
                 \ b:logavim__fold_regexps, b:logavim__fold_regions)
 endfunction
 
-function! s:logalizeCmd(bufnr, bufname, args) abort
-    let [nocolor_arg, scheme_arg] = ['', '']
+function! s:logalizeCmd(args) abort
+    let [nocolor_arg, scheme_arg, bufnum] = ['', '', bufnr('%')]
     for arg in a:args
         if arg =~# '^-nocolor'
             let nocolor_arg = arg
@@ -90,15 +90,15 @@ function! s:logalizeCmd(bufnr, bufname, args) abort
         let g:logavim_repetition_threshold = 3
     endif
 
-    call s:splitNewBuf('logalized_' . a:bufname)
+    call s:splitNewBuf('logalized_' . fnamemodify(expand("%"), ":t"))
     let b:logavim__noargs = !len(nocolor_arg)
     let nocolor_arg = nocolor_arg[8:]
     if nocolor_arg =~# '^='
         let nocolor_arg = nocolor_arg[1:]
     endif
     let b:logavim__nocolor_list = split(nocolor_arg, ',')
-    let b:logavim__scheme_name = getbufvar(a:bufnr, 'logavim_scheme')
-    let b:logavim__orig_bufnr = a:bufnr
+    let b:logavim__scheme_name = getbufvar(bufnum, 'logavim_scheme')
+    let b:logavim__orig_bufnr = bufnum
     let b:logavim__replace_pats = exists('g:logavim_replacement_patterns') ?
                 \ g:logavim_replacement_patterns : []
     let b:logavim__fold_similars = []
@@ -181,7 +181,7 @@ function! s:completeLogalize(argLead, cmdLine, cursorPos) abort
 endfunction
 
 command! -nargs=* -complete=customlist,s:completeLogalize Logalize
-            \ call s:logalizeCmd(bufnr("%"), fnamemodify(expand("%"), ":t"), [<f-args>])
+                                            \ call s:logalizeCmd([<f-args>])
 
 silent do LogaVim_User User LogaVimLoaded
 
