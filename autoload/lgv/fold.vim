@@ -4,13 +4,14 @@ endif
 let g:loaded_lgv_fold_autoload = 1
 
 function! lgv#fold#ScanFull(linenr, similarity_threshold, repetition_threshold,
-            \ similars_arr, re_arr) abort
+                        \ similars_arr, re_arr, fold_regions) abort
     if a:linenr < 2
         normal! zE
     endif
     call lgv#fold#ScanLines(a:linenr, a:similarity_threshold, a:repetition_threshold)
     call lgv#fold#ScanBlocks(a:linenr, a:similars_arr)
     call lgv#fold#ScanRegexpBlocks(a:linenr, a:re_arr)
+    call lgv#fold#ScanRegions(a:linenr, a:fold_regions)
 endfunction
 
 function! lgv#fold#ScanLines(linenr, similarity_threshold, repetition_threshold) abort
@@ -49,6 +50,20 @@ function! lgv#fold#ScanRegexpBlocks(linenr, re_arr) abort
     if diff_start > 0
         execute 'normal! Gzf' . diff_start . 'kG'
     endif
+endfunction
+
+function! lgv#fold#ScanRegions(linenr, fold_regions) abort
+    if empty(a:fold_regions)
+        return
+    endif
+    let lines = getline(a:linenr, '$')
+    for rgn in a:fold_regions
+        for [ln0,ln1] in s:getFoldsForRegion(rgn, lines)
+            if ln1-ln0 > 1
+                execute 'normal! ' . (a:linenr+ln0) . 'Gzf' . (ln1-ln0) . 'j'
+            endif
+        endfor
+    endfor
 endfunction
 
 function! lgv#fold#ScanBlocks(linenr, similars_arr) abort
@@ -104,3 +119,17 @@ function! s:isLinesSimilar(lines0, lines1, threshold) abort
     return cnt == length
 endfunction
 
+function! s:getFoldsForRegion(region, lines) abort
+    let [pair, firstfound, ret] = [[0,0], 0, []]
+    for i in range(len(a:lines))
+        if matchend(a:lines[i], a:region[firstfound]) > 0
+            let pair[firstfound] = i
+            let firstfound += 1
+        endif
+        if firstfound > 1
+            let ret += [[pair[0], pair[1]+a:region[2]]]
+            let firstfound = 0
+        endif
+    endfor
+    return ret
+endfunction

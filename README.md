@@ -95,4 +95,20 @@ augroup LogaVim_User
         \ }
       \ })
 augroup END
+```
+
+When frustrating log blocks are between known lines, then scheme definition should be extended by `fold_regions` attribute - no accompanying command for this:
+```vim
+augroup LogaVim_User
+    au LogaVim_User User LogaVimLoaded call lgv#registry#Add('bootlog', {
+          \ 'logline': '^%TIME% %LOGLEVEL%: ',
+            ...
+          \ 'fold_regions': [
+            \ ['^pat_initials \S\+', '.* PAT_LAST[A-Z]\+', <drift>],
+            \ ['^pat_initials11 \S\+', '.* PAT_LAST 2[A-Z]\+', <drift>]
+          \ ]
+        \ }
+      \ })
+augroup END
+```
 
