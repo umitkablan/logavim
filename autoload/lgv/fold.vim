@@ -83,6 +83,22 @@ function! lgv#fold#ScanBlocks(linenr, similars_arr) abort
     endfor
 endfunction
 
+function! lgv#fold#CountMatchingBlocks(sim_lines, threshold) abort
+    let lines = getline(1, '$')
+    let [leng, ln, all_length, ret] = [len(a:sim_lines)-1, 0, len(lines), 0]
+    while 1
+        if ln + leng >= all_length
+            break
+        endif
+        if s:isLinesSimilar(a:sim_lines, lines[ln : ln+leng], a:threshold)
+            let ret += 1
+            let ln += leng
+        endif
+        let ln += 1
+    endwhile
+    return ret
+endfunction
+
 function! s:isLineNotIn(line, re_arr) abort
     for re in a:re_arr
         if matchend(a:line, re) > 0
