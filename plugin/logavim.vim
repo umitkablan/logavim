@@ -118,6 +118,15 @@ function! s:logalizeCmd(bufnr, bufname, args) abort
     command -buffer -nargs=* LGReplace call s:replaceCmd([<f-args>])
     command -buffer -range   LGFoldSimilar call s:foldSimilarCmd(<line1>, <line2>)
     command -buffer -nargs=1 LGFoldRegexp call s:foldRegexpCmd(<q-args>)
+
+    vmap <silent> <buffer> / :call LogalizedCountSelected()<CR>
+endfunction
+
+function! LogalizedCountSelected() range
+    echomsg 'Matched #' .
+            \ lgv#fold#CountMatchingBlocks(getline(a:firstline, a:lastline),
+            \ g:logavim_similarity_threshold)
+    normal! gv
 endfunction
 
 function! s:cursorHold() abort
