@@ -135,9 +135,9 @@ function! s:cursorHold() abort
         let line = getbufline(b:logavim__orig_bufnr, linenr, linenr)
         let i = matchend(line[0], getbufvar(b:logavim__orig_bufnr, 'logavim_line_pattern'))
         if i > 0
-            echomsg line[0]
+            echo line[0]
         else
-            echomsg ''
+            echo ''
         endif
     catch /.*/
         echomsg 'LogaVim ERROR: ' . v:exception
