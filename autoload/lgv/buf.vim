@@ -18,6 +18,7 @@ function! lgv#buf#PopulateUsingScheme(bufnr, scheme, nocolor_list, show_colors, 
         let sync_lines = lgv#buf#PopulateLogsNoColor(a:bufnr, logpat, shrink_maxlen, a:linenr, a:replace_pats)
 
     endif
+    normal! gg"_ddG
     return sync_lines
 endfunction
 
