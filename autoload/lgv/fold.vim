@@ -8,18 +8,19 @@ function! lgv#fold#ScanFull(linenr, similarity_threshold, repetition_threshold,
     if a:linenr < 2
         normal! zE
     endif
-    call lgv#fold#ScanLines(a:linenr, a:similarity_threshold, a:repetition_threshold)
-    call lgv#fold#ScanBlocks(a:linenr, a:similars_arr)
-    call lgv#fold#ScanRegexpBlocks(a:linenr, a:re_arr)
-    call lgv#fold#ScanRegions(a:linenr, a:fold_regions)
+    let lines = getline(a:linenr, '$')
+
+    call lgv#fold#ScanLines(a:linenr, lines, a:similarity_threshold, a:repetition_threshold)
+    call lgv#fold#ScanBlocks(a:linenr, lines, a:similars_arr)
+    call lgv#fold#ScanRegexpBlocks(a:linenr, lines, a:re_arr)
+    call lgv#fold#ScanRegions(a:linenr, lines, a:fold_regions)
 endfunction
 
-function! lgv#fold#ScanLines(linenr, similarity_threshold, repetition_threshold) abort
+function! lgv#fold#ScanLines(linenr, lines, similarity_threshold, repetition_threshold) abort
     let [line_num, diff_start] = [a:linenr-1, a:linenr]
-    let lines = getline(a:linenr, '$')
-    for line in lines
+    for line in a:lines
         if line_num < 1 ||
-        \ s:calcSimilarity(line, lines[line_num-a:linenr]) < a:similarity_threshold
+                    \ s:calcSimilarity(line, a:lines[line_num-a:linenr]) < a:similarity_threshold
             let diff_start = line_num - diff_start
             if diff_start > a:repetition_threshold
                 execute 'normal! ' . line_num . 'Gzf' . diff_start . 'kj'
@@ -34,9 +35,9 @@ function! lgv#fold#ScanLines(linenr, similarity_threshold, repetition_threshold)
     endif
 endfunction
 
-function! lgv#fold#ScanRegexpBlocks(linenr, re_arr) abort
+function! lgv#fold#ScanRegexpBlocks(linenr, lines, re_arr) abort
     let [line_num, diff_start] = [a:linenr, a:linenr]
-    for line in getline(a:linenr, '$')
+    for line in a:lines
         if s:isLineNotIn(line, a:re_arr)
             let diff_start = line_num - diff_start - 1
             if diff_start > 0
@@ -52,13 +53,9 @@ function! lgv#fold#ScanRegexpBlocks(linenr, re_arr) abort
     endif
 endfunction
 
-function! lgv#fold#ScanRegions(linenr, fold_regions) abort
-    if empty(a:fold_regions)
-        return
-    endif
-    let lines = getline(a:linenr, '$')
+function! lgv#fold#ScanRegions(linenr, lines, fold_regions) abort
     for rgn in a:fold_regions
-        for [ln0,ln1] in s:getFoldsForRegion(rgn, lines)
+        for [ln0,ln1] in s:getFoldsForRegion(rgn, a:lines)
             if ln1-ln0 > 1
                 execute 'normal! ' . (a:linenr+ln0) . 'Gzf' . (ln1-ln0) . 'j'
             endif
@@ -66,15 +63,14 @@ function! lgv#fold#ScanRegions(linenr, fold_regions) abort
     endfor
 endfunction
 
-function! lgv#fold#ScanBlocks(linenr, similars_arr) abort
-    let lines = getline(a:linenr, '$')
+function! lgv#fold#ScanBlocks(linenr, lines, similars_arr) abort
     for [sim_lines, threshold] in a:similars_arr
-        let [leng, ln, all_length] = [len(sim_lines)-1, 0, len(lines)]
+        let [leng, ln, all_length] = [len(sim_lines)-1, 0, len(a:lines)]
         while 1
             if ln + leng >= all_length
                 break
             endif
-            if s:isLinesSimilar(sim_lines, lines[ln : ln+leng], threshold)
+            if s:isLinesSimilar(sim_lines, a:lines[ln : ln+leng], threshold)
                 execute 'normal! ' . (ln+a:linenr) . 'Gzf' . leng . 'jj'
                 let ln += leng
             endif
@@ -83,14 +79,13 @@ function! lgv#fold#ScanBlocks(linenr, similars_arr) abort
     endfor
 endfunction
 
-function! lgv#fold#CountMatchingBlocks(sim_lines, threshold) abort
-    let lines = getline(1, '$')
-    let [leng, ln, all_length, ret] = [len(a:sim_lines)-1, 0, len(lines), 0]
+function! lgv#fold#CountMatchingBlocks(sim_lines, lines, threshold) abort
+    let [leng, ln, all_length, ret] = [len(a:sim_lines)-1, 0, len(a:lines), 0]
     while 1
         if ln + leng >= all_length
             break
         endif
-        if s:isLinesSimilar(a:sim_lines, lines[ln : ln+leng], a:threshold)
+        if s:isLinesSimilar(a:sim_lines, a:lines[ln : ln+leng], a:threshold)
             let ret += 1
             let ln += leng
         endif
