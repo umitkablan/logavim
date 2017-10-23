@@ -90,7 +90,7 @@ function! s:logalizeCmd(args) abort
         let g:logavim_repetition_threshold = 3
     endif
 
-    call s:splitNewBuf('logalized_' . fnamemodify(expand("%"), ":t"))
+    call s:splitNewBuf('logalized_' . fnamemodify(expand('%'), ':t'))
     let b:logavim__noargs = !len(nocolor_arg)
     let nocolor_arg = nocolor_arg[8:]
     if nocolor_arg =~# '^='
