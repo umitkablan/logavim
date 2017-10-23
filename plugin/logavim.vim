@@ -105,6 +105,8 @@ function! s:logalizeCmd(args) abort
     let scheme_def = lgv#registry#GetByName(b:logavim__scheme_name)
     let b:logavim__fold_regexps = get(scheme_def, 'fold_patterns', [])
     let b:logavim__fold_regions = get(scheme_def, 'fold_regions', [])
+
+    let tm = reltime()
     let b:logavim__logalize_synclines =
                 \ lgv#buf#Populate(b:logavim__orig_bufnr, b:logavim__scheme_name,
                                 \ b:logavim__nocolor_list, b:logavim__noargs,
@@ -112,6 +114,8 @@ function! s:logalizeCmd(args) abort
     call lgv#fold#ScanFull(1, g:logavim_similarity_threshold,
                     \ g:logavim_repetition_threshold, b:logavim__fold_similars,
                     \ b:logavim__fold_regexps, b:logavim__fold_regions)
+    echomsg 'LogaVim: It took ' . reltimestr(reltime(tm, reltime())) . ' secs to prepare.'
+
     call setbufvar(b:logavim__orig_bufnr, '&autoread', 1)
     execute "normal! \<C-w>_"
 
