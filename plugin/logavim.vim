@@ -48,11 +48,22 @@ function! s:foldSimilarCmd(ln1, ln2) abort
                 \ b:logavim__fold_similars)
 endfunction
 
-function! s:foldRegexpCmd(regexp) abort
-    let b:logavim__fold_regexps += [a:regexp]
+function! s:foldRegexpCmd(args) abort
+    if len(a:args) < 1
+        echoerr 'LogaVim: LGFoldRegexp expects at least regexp as argument!'
+        return
+    endif
+    let [regexp, group_name] = [a:args[0], get(a:args, 1, '_default_')]
+
+    if has_key(b:logavim__fold_groups, group_name)
+        let b:logavim__fold_groups[group_name] += [regexp]
+    else
+        let b:logavim__fold_groups[group_name] = [regexp]
+    endif
+
     call lgv#fold#ScanFull(1, g:logavim_similarity_threshold,
                 \ g:logavim_repetition_threshold, b:logavim__fold_similars,
-                \ b:logavim__fold_regexps, b:logavim__fold_regions)
+                \ b:logavim__fold_groups, b:logavim__fold_regions)
 endfunction
 
 function! s:logalizeCmd(args) abort
@@ -103,7 +114,7 @@ function! s:logalizeCmd(args) abort
                 \ g:logavim_replacement_patterns : []
     let b:logavim__fold_similars = []
     let scheme_def = lgv#registry#GetByName(b:logavim__scheme_name)
-    let b:logavim__fold_regexps = get(scheme_def, 'fold_patterns', [])
+    let b:logavim__fold_groups = get(scheme_def, 'fold_groups', {})
     let b:logavim__fold_regions = get(scheme_def, 'fold_regions', [])
 
     let tm = reltime()
@@ -113,7 +124,7 @@ function! s:logalizeCmd(args) abort
                                 \ b:logavim__replace_pats)
     call lgv#fold#ScanFull(1, g:logavim_similarity_threshold,
                     \ g:logavim_repetition_threshold, b:logavim__fold_similars,
-                    \ b:logavim__fold_regexps, b:logavim__fold_regions)
+                    \ b:logavim__fold_groups, b:logavim__fold_regions)
     echomsg 'LogaVim: It took ' . reltimestr(reltime(tm, reltime())) . ' secs to prepare.'
 
     call setbufvar(b:logavim__orig_bufnr, '&autoread', 1)
@@ -121,7 +132,7 @@ function! s:logalizeCmd(args) abort
 
     command -buffer -nargs=* LGReplace call s:replaceCmd([<f-args>])
     command -buffer -range   LGFoldSimilar call s:foldSimilarCmd(<line1>, <line2>)
-    command -buffer -nargs=1 LGFoldRegexp call s:foldRegexpCmd(<q-args>)
+    command -buffer -nargs=* LGFoldRegexp call s:foldRegexpCmd([<f-args>])
 
     vmap <silent> <buffer> / :call LogalizedCountSelected()<CR>
 endfunction
@@ -158,7 +169,7 @@ function! s:bufEnterEvent() abort
                             \ b:logavim__noargs, b:logavim__replace_pats)
         call lgv#fold#ScanFull(1, g:logavim_similarity_threshold,
                     \ g:logavim_repetition_threshold, b:logavim__fold_similars,
-                    \ b:logavim__fold_regexps, b:logavim__fold_regions)
+                    \ b:logavim__fold_groups, b:logavim__fold_regions)
     elseif upd == 1
         let b:logavim__logalize_synclines =
                     \ lgv#buf#RefreshAppend(b:logavim__orig_bufnr, length,
@@ -166,7 +177,7 @@ function! s:bufEnterEvent() abort
                             \ b:logavim__noargs, b:logavim__replace_pats)
         call lgv#fold#ScanFull(length, g:logavim_similarity_threshold,
                     \ g:logavim_repetition_threshold, b:logavim__fold_similars,
-                    \ b::logavim__fold_regexps, b:logavim__fold_regions)
+                    \ b::logavim__fold_groups, b:logavim__fold_regions)
     endif
 endfunction
 

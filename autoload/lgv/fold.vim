@@ -12,7 +12,7 @@ function! lgv#fold#ScanFull(linenr, similarity_threshold, repetition_threshold,
 
     call lgv#fold#ScanLines(a:linenr, lines, a:similarity_threshold, a:repetition_threshold)
     call lgv#fold#ScanBlocks(a:linenr, lines, a:similars_arr)
-    call lgv#fold#ScanRegexpBlocks(a:linenr, lines, a:re_arr)
+    call lgv#fold#ScanRegexpGroups(a:linenr, lines, a:re_arr)
     call lgv#fold#ScanRegions(a:linenr, lines, a:fold_regions)
 endfunction
 
@@ -35,7 +35,13 @@ function! lgv#fold#ScanLines(linenr, lines, similarity_threshold, repetition_thr
     endif
 endfunction
 
-function! lgv#fold#ScanRegexpBlocks(linenr, lines, re_arr) abort
+function! lgv#fold#ScanRegexpGroups(linenr, lines, re_groups) abort
+    for re_arr in values(a:re_groups)
+        call lgv#fold#ScanRegexpArr(a:linenr, a:lines, re_arr)
+    endfor
+endfunction
+
+function! lgv#fold#ScanRegexpArr(linenr, lines, re_arr) abort
     let [line_num, diff_start] = [a:linenr, a:linenr]
     for line in a:lines
         if s:isLineNotIn(line, a:re_arr)
