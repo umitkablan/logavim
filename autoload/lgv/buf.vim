@@ -18,7 +18,7 @@ function! lgv#buf#PopulateUsingScheme(bufnr, scheme, nocolor_list, show_colors, 
         let sync_lines = lgv#buf#PopulateLogsNoColor(a:bufnr, logpat, shrink_maxlen, a:linenr, a:replace_pats)
 
     endif
-    normal! gg"_ddG
+    silent execute 'keepjumps normal! gg"_ddG'
     return sync_lines
 endfunction
 
@@ -51,7 +51,7 @@ function! lgv#buf#RefreshFull(orig_bufnr, scheme_name, nocolor_list, is_noargs,
                             \ replace_pats) abort
     setlocal modifiable noreadonly
     call clearmatches()
-    normal! gg"_dG
+    silent execute 'keepjumps normal! gg"_dG'
     let ret = lgv#buf#PopulateUsingScheme(a:orig_bufnr,
                     \ lgv#registry#GetByName(a:scheme_name), a:nocolor_list,
                     \ a:is_noargs, 1, a:replace_pats)
@@ -60,8 +60,8 @@ function! lgv#buf#RefreshFull(orig_bufnr, scheme_name, nocolor_list, is_noargs,
 endfunction
 
 function! lgv#buf#RefreshAppend(orig_bufnr, linenr, scheme_name, nocolor_list,
-                            \ is_noargs, replace_pats) abort
-    normal! G
+            \ is_noargs, replace_pats) abort
+    silent execute 'keepjumps normal! G'
     setlocal modifiable noreadonly
     let ret = lgv#buf#PopulateUsingScheme(a:orig_bufnr,
                     \ lgv#registry#GetByName(a:scheme_name), a:nocolor_list,

@@ -38,9 +38,11 @@ function! s:replaceCmd(args) abort
     endif
 
     let b:logavim__replace_pats += [[pat, replacement]]
+    let pos = getpos('.')
     let b:logavim__logalize_synclines =
         \ lgv#buf#RefreshFull(b:logavim__orig_bufnr, b:logavim__scheme_name,
-            \ b:logavim__nocolor_list, b:logavim__noargs, b:logavim__replace_pats)
+        \ b:logavim__nocolor_list, b:logavim__noargs, b:logavim__replace_pats)
+    call setpos('.', pos)
 endfunction
 
 function! s:foldSimilarCmd(ln1, ln2) abort
@@ -50,9 +52,11 @@ function! s:foldSimilarCmd(ln1, ln2) abort
     endif
     let lines = getline(a:ln1, a:ln2)
     let b:logavim__fold_similars += [[lines, g:logavim_similarity_threshold]]
+    let pos = getpos('.')
     call lgv#fold#ScanFull(1, g:logavim_similarity_threshold,
                 \ g:logavim_repetition_threshold, b:logavim__fold_similars,
                 \ b:logavim__fold_groups, b:logavim__fold_regions)
+    call setpos('.', pos)
 endfunction
 
 function! s:foldRegexpCmd(args) abort
@@ -68,9 +72,11 @@ function! s:foldRegexpCmd(args) abort
         let b:logavim__fold_groups[group_name] = [regexp]
     endif
 
+    let pos = getpos('.')
     call lgv#fold#ScanFull(1, g:logavim_similarity_threshold,
                 \ g:logavim_repetition_threshold, b:logavim__fold_similars,
                 \ b:logavim__fold_groups, b:logavim__fold_regions)
+    call setpos('.', pos)
 endfunction
 
 function! s:logalizeCmd(args) abort
@@ -126,6 +132,7 @@ function! s:logalizeCmd(args) abort
                     \ g:logavim_repetition_threshold, b:logavim__fold_similars,
                     \ b:logavim__fold_groups, b:logavim__fold_regions)
     echomsg 'LogaVim: It took ' . reltimestr(reltime(tm, reltime())) . ' secs to prepare.'
+    execute 'normal! G'
 
     call setbufvar(b:logavim__orig_bufnr, '&autoread', 1)
     execute "normal! \<C-w>_"
@@ -162,6 +169,7 @@ endfunction
 function! s:bufEnterEvent() abort
     let [upd, length] = lgv#buf#CheckUpdated(b:logavim__logalize_synclines,
                                         \ b:logavim__orig_bufnr)
+    let pos = getpos('.')
     if upd == 2
         let b:logavim__logalize_synclines =
                     \ lgv#buf#RefreshFull(b:logavim__orig_bufnr,
@@ -179,6 +187,7 @@ function! s:bufEnterEvent() abort
                     \ g:logavim_repetition_threshold, b:logavim__fold_similars,
                     \ b::logavim__fold_groups, b:logavim__fold_regions)
     endif
+    call setpos('.', pos)
 endfunction
 
 augroup LogaVim_Augroup

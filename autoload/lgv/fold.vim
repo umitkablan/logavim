@@ -23,7 +23,7 @@ function! lgv#fold#ScanLines(linenr, lines, similarity_threshold, repetition_thr
                     \ s:calcSimilarity(line, a:lines[line_num-a:linenr]) < a:similarity_threshold
             let diff_start = line_num - diff_start
             if diff_start > a:repetition_threshold
-                execute 'normal! ' . line_num . 'Gzf' . diff_start . 'kj'
+                execute 'keepjumps normal! ' . line_num . 'Gzf' . diff_start . 'kj'
             endif
             let diff_start = line_num + 1
         endif
@@ -31,7 +31,7 @@ function! lgv#fold#ScanLines(linenr, lines, similarity_threshold, repetition_thr
     endfor
     let diff_start = line_num - diff_start
     if diff_start > a:repetition_threshold
-        execute 'normal! Gzf' . diff_start . 'kG'
+        execute 'keepjumps normal! Gzf' . diff_start . 'kG'
     endif
 endfunction
 
@@ -47,7 +47,7 @@ function! lgv#fold#ScanRegexpArr(linenr, lines, re_arr) abort
         if s:isLineNotIn(line, a:re_arr)
             let diff_start = line_num - diff_start - 1
             if diff_start > 0
-                execute 'normal! ' . (line_num-1) . 'Gzf' . diff_start . 'kj'
+                execute 'keepjumps normal! ' . (line_num-1) . 'Gzf' . diff_start . 'kj'
             endif
             let diff_start = line_num + 1
         endif
@@ -55,7 +55,7 @@ function! lgv#fold#ScanRegexpArr(linenr, lines, re_arr) abort
     endfor
     let diff_start = line_num - diff_start - 1
     if diff_start > 0
-        execute 'normal! Gzf' . diff_start . 'kG'
+        execute 'keepjumps normal! Gzf' . diff_start . 'kG'
     endif
 endfunction
 
@@ -63,7 +63,7 @@ function! lgv#fold#ScanRegions(linenr, lines, fold_regions) abort
     for rgn in a:fold_regions
         for [ln0,ln1] in s:getFoldsForRegion(rgn, a:lines)
             if ln1-ln0 > 1
-                execute 'normal! ' . (a:linenr+ln0) . 'Gzf' . (ln1-ln0) . 'j'
+                execute 'keepjumps normal! ' . (a:linenr+ln0) . 'Gzf' . (ln1-ln0) . 'j'
             endif
         endfor
     endfor
@@ -77,7 +77,7 @@ function! lgv#fold#ScanBlocks(linenr, lines, similars_arr) abort
                 break
             endif
             if s:isLinesSimilar(sim_lines, a:lines[ln : ln+leng], threshold)
-                execute 'normal! ' . (ln+a:linenr) . 'Gzf' . leng . 'jj'
+                execute 'keepjumps normal! ' . (ln+a:linenr) . 'Gzf' . leng . 'jj'
                 let ln += leng
             endif
             let ln += 1
