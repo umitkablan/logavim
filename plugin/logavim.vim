@@ -45,7 +45,7 @@ function! s:foldSimilarCmd(ln1, ln2) abort
     let b:logavim__fold_similars += [[lines, g:logavim_similarity_threshold]]
     call lgv#fold#ScanFull(1, g:logavim_similarity_threshold,
                 \ g:logavim_repetition_threshold, b:logavim__fold_similars,
-                \ b:logavim__fold_similars)
+                \ b:logavim__fold_groups, b:logavim__fold_regions)
 endfunction
 
 function! s:foldRegexpCmd(args) abort
