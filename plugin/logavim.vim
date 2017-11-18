@@ -3,6 +3,13 @@ if exists('g:loaded_logavim_plugin')
 endif
 let g:loaded_logavim_plugin = 1
 
+if !exists('g:logavim_similarity_threshold')
+    let g:logavim_similarity_threshold = 92.0
+endif
+if !exists('g:logavim_repetition_threshold')
+    let g:logavim_repetition_threshold = 3
+endif
+
 function! s:splitNewBuf(bufname) abort
     setlocal noautoread
     execute 'aboveleft split ' . a:bufname
@@ -92,13 +99,6 @@ function! s:logalizeCmd(args) abort
     if !lgv#registry#Exists(b:logavim_scheme)
         echoerr 'LogaVim: Logalize: Scheme "' . b:logavim_scheme . '" not found'
         return
-    endif
-
-    if !exists('g:logavim_similarity_threshold')
-        let g:logavim_similarity_threshold = 92.0
-    endif
-    if !exists('g:logavim_repetition_threshold')
-        let g:logavim_repetition_threshold = 3
     endif
 
     call s:splitNewBuf('logalized_' . fnamemodify(expand('%'), ':t'))
