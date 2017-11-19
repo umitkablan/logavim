@@ -13,9 +13,10 @@ Plug 'umitkablan/logavim'
 How to Use and Configure
 ------------------------
 Open a log file and type `:Logalize` to create a new filtered read-only buffer from the contents of the current log buffer.
+
 The filtered-out characters of the cursor line will be shown on the command line so you'd have the dirty sections (like date and log level) both away from your eye and easy visible - if the coloring is not enough.
 
-As log files are usually analysed during a program execution, logs will be automatically reloaded when log file is changed by an external program. Both the original log buffer and LogaVim buffer will be reloaded.
+As log files are usually analysed during a program execution, logs will be automatically reloaded when log file is changed by an external program. Both the original log buffer and Logalized buffer will be reloaded.
 
 Some log files contain many repetitive lines and these lines will be folded on Logalized buffer. The similarity percentage is controlled by `g:logavim_similarity_threshold` and the threshold for repetition is `g:logavim_repetition_threshold`. In short, if two consecutive lines are similar to each other more than `g:logavim_similarity_threshold` they will be considered to be folded when this line count exceeds `g:logavim_repetition_threshold`.
 
