@@ -137,6 +137,16 @@ function! s:getLogKeyFromString(logline, firstidx) abort
     return [a:logline[index_start+1:index_end-1], index_start, index_end]
 endfunction
 
+let s:regexp_dictionary = {
+    \ 'DT_YYYY-MM-DD': '\d\d\d\d-\d\d-\d\d',
+    \ 'TM_HH:MM:SS'   : '\d\d:\d\d:\d\d',
+    \ 'TM_HH:MM:SS.MS': '\d\d:\d\d:\d\d\.\d\+',
+    \ 'TZ_NUMS': '[+-]\d\+',
+    \ 'LL_NONSPACE': '\S\+',
+    \ 'LL_CAPITALS': '[A-Z]\+',
+    \ 'LL_CAPITALS_SPACED': '[A-Z ]\+'
+\ }
+
 function! s:parseLoglineToPattern(logln, dict, color_section) abort
     let [index_start, logline] = [0, a:logln]
     while 1
@@ -144,7 +154,10 @@ function! s:parseLoglineToPattern(logln, dict, color_section) abort
         if key ==# ''
             break
         endif
-        let pat = get(a:dict, key, '')
+        let pat = get(s:regexp_dictionary, key, '')
+        if pat ==# ''
+            let pat = get(a:dict, key, '')
+        endif
         if pat ==# ''
             let index_start = index_end + 1
             continue

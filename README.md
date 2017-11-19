@@ -21,7 +21,7 @@ Some log files contain many repetitive lines and these lines will be folded on L
 
 The log-line pattern should be fed by the user, first by registering the scheme with it's name and then defining the buffer variable `b:logavim_scheme` - the scheme name registered before. These better be done in `vimrc` and `autocommand`s. Hence, better use `LogaVimLoaded` signal in `LogaVim_User` augroup to #register - you will be able to lazy load the plugin.
 
-As an example, let's say we have a boot.log file we need to `:Logalize`:
+As an example, let's say we have a boot.log file we need to `:Logalize` - note that `'dict'` attribute could be avoided and embedded dictionary used instead:
 
 ```vim
 augroup LogaVim_User
@@ -45,6 +45,24 @@ augroup LogaVim_Schemes_LocalDefs
   au!
   au BufRead boot.log let b:logavim_scheme = 'bootlog'
 augroup END
+```
+
+To avoid repetitive regexp dictionary definitions, LogaVim comes with predefined names within:
+
+| Name               | Regular Expression   |
+| ------------------ | -------------------- |
+| DT_YYYY-MM-DD      | \d\d\d\d-\d\d-\d\d   |
+| TM_HH:MM:SS        | \d\d:\d\d:\d\d       |
+| TM_HH:MM:SS.MS     | \d\d:\d\d:\d\d\.\d\+ |
+| TZ_NUMS            | [+-]\d\+             |
+| LL_NONSPACE        | \S\+                 |
+| LL_CAPITALS        | [A-Z]\+              |
+| LL_CAPITALS_SPACED | [A-Z ]\+             |
+
+So, in above example we could've used predefined names with no need to define a dictionary:
+```vim
+          \ 'logline': '^%TM_HH:MM:SS% %LL_NONSPACE%: ',
+          \ 'color_section': 'LL_NONSPACE',
 ```
 
 Feed Scheme Name Manually
