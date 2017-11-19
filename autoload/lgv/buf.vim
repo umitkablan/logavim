@@ -7,7 +7,7 @@ function! lgv#buf#PopulateUsingScheme(bufnr, scheme, nocolor_list, show_colors, 
     let logline = get(a:scheme, 'logline', '')
     let dict = get(a:scheme, 'dict', {})
     let color_section = get(a:scheme, 'color_section', '')
-    let shrink_maxlen = get(a:scheme, 'shrink_maxlen', 0)
+    let shrink_maxlen = get(a:scheme, 'shrink_maxlen', g:logavim_shrink_maxlen)
     let logpat = s:parseLoglineToPattern(logline, dict, color_section)
     call setbufvar(a:bufnr, 'logavim_line_pattern', logpat)
     if len(a:nocolor_list) || a:show_colors

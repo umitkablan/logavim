@@ -75,7 +75,7 @@ So, practically, you could define schemes with no automatic attachment to file-p
 
 Shrinking Long Lines
 --------------------
-If you want to shrink long lines you could add `'shrink_maxlen'` attribute to the scheme dictionary. This will crop long lines and append `...` to the end as a marker.
+If you want to shrink long lines you could add `'shrink_maxlen'` attribute to the scheme dictionary. This will crop long lines and append `...` to the end as a marker. The global configuration `g:logavim_shrink_maxlen [= default 0]` could be defined to avoid repetition of the same value in user definitions.
 
 Disable Coloring
 ----------------

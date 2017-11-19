@@ -9,6 +9,9 @@ endif
 if !exists('g:logavim_repetition_threshold')
     let g:logavim_repetition_threshold = 3
 endif
+if !exists('g:logavim_shrink_maxlen')
+    let g:logavim_shrink_maxlen = 0
+endif
 
 function! s:splitNewBuf(bufname) abort
     setlocal noautoread
