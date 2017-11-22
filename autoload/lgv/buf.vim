@@ -138,13 +138,16 @@ function! s:getLogKeyFromString(logline, firstidx) abort
 endfunction
 
 let s:regexp_dictionary = {
-    \ 'DT_YYYY-MM-DD': '\d\d\d\d-\d\d-\d\d',
-    \ 'TM_HH:MM:SS'   : '\d\d:\d\d:\d\d',
-    \ 'TM_HH:MM:SS.MS': '\d\d:\d\d:\d\d\.\d\+',
-    \ 'TZ_NUMS': '[+-]\d\+',
-    \ 'LL_NONSPACE': '\S\+',
-    \ 'LL_CAPITALS': '[A-Z]\+',
-    \ 'LL_CAPITALS_SPACED': '[A-Z ]\+'
+    \ 'YYYY-MM-DD' : '\d\d\d\d-\d\d-\d\d',
+    \ 'HH:MM:SS'   : '\d\d:\d\d:\d\d',
+    \ 'HH:MM:SS.MS': '\d\d:\d\d:\d\d\.\d\+',
+    \ 'HH:MM:SS,MS': '\d\d:\d\d:\d\d,\d\+',
+    \ '+-TIMEZONE' : '[+-]\d\+',
+    \ 'LogLevel_09': '\S\+',
+    \ 'LOGLEVEL'   : '[A-Z]\+',
+    \ 'LOG LEVEL'  : '[A-Z ]\+',
+    \ 'LOGLEVEL 09': '[A-Z0-9 ]\+',
+    \ 'LogLevel 09': '[A-Za-z0-9 ]\+'
 \ }
 
 function! s:parseLoglineToPattern(logln, dict, color_section) abort

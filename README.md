@@ -50,20 +50,23 @@ augroup END
 
 To avoid repetitive regexp dictionary definitions, LogaVim comes with predefined names within:
 
-| Name               | Regular Expression   |
-| ------------------ | -------------------- |
-| DT_YYYY-MM-DD      | \d\d\d\d-\d\d-\d\d   |
-| TM_HH:MM:SS        | \d\d:\d\d:\d\d       |
-| TM_HH:MM:SS.MS     | \d\d:\d\d:\d\d\.\d\+ |
-| TZ_NUMS            | [+-]\d\+             |
-| LL_NONSPACE        | \S\+                 |
-| LL_CAPITALS        | [A-Z]\+              |
-| LL_CAPITALS_SPACED | [A-Z ]\+             |
+| Name         | Regular Expression    |
+| ------------ | --------------------- |
+| YYYY-MM-DD   | \d\d\d\d-\d\d-\d\d    |
+| HH:MM:SS     | \d\d:\d\d:\d\d        |
+| HH:MM:SS.MS  | \d\d:\d\d:\d\d\.\d\+  |
+| HH:MM:SS,MS  | \d\d:\d\d:\d\d,\d\+   |
+| +-TIMEZONE   | [+-]\d\+              |
+| LogLevel_09  | \S\+                  |
+| LOGLEVEL     | [A-Z]\+               |
+| LOG LEVEL    | [A-Z ]\+              |
+| LOGLEVEL 09  | [A-Z0-9 ]\+           |
+| LogLevel 09  | [A-Za-z0-9 ]\+        |
 
 So, in above example we could've used predefined names with no need to define a dictionary:
 ```vim
-          \ 'logline': '^%TM_HH:MM:SS% %LL_NONSPACE%: ',
-          \ 'color_section': 'LL_NONSPACE',
+          \ 'logline': '^%HH:MM:SS% %LogLevel_09%: ',
+          \ 'color_section': 'LogLevel_09',
 ```
 
 Feed Scheme Name Manually
