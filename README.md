@@ -81,6 +81,10 @@ Shrinking Long Lines
 --------------------
 If you want to shrink long lines you could add `'shrink_maxlen'` attribute to the scheme dictionary. This will crop long lines and append `...` to the end as a marker. The global configuration `g:logavim_shrink_maxlen [= default 0]` could be defined to avoid repetition of the same value in user definitions.
 
+Showing Original Line On Command Lane
+-------------------------------------
+Logavim is mainly to crop long lines to see relevant parts of a log line, tough it's not aimed to hide original untransformed text. In the `Logalized` buffer if the mapping defined in `g:logavim_showorig_map` (default not defined) is pressed, the original line displays in command lane. Note that this line will appear only if the current line is cropped or transformed - i.e. has original.
+
 Disable Coloring
 ----------------
 If you want to disable coloring of some log lines. You can provide `-nocolor` argument to `:Logalize` command. `-nocolor=` accepts comma separated values for field tags to disable. If no values are passed then all line coloring is disabled.

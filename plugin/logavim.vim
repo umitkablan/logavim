@@ -143,8 +143,12 @@ function! s:logalizeCmd(args) abort
     command -buffer -nargs=* LGReplace call s:replaceCmd([<f-args>])
     command -buffer -range   LGFoldSimilar call s:foldSimilarCmd(<line1>, <line2>)
     command -buffer -nargs=* LGFoldRegexp call s:foldRegexpCmd([<f-args>])
+    nnoremap <silent> <buffer> <Plug>LogavimShowOrigLine :<C-U>call <SID>showCurLineOrig()<CR>
 
     vmap <silent> <buffer> / :call LogalizedCountSelected()<CR>
+    if exists('g:logavim_showorig_map') && g:logavim_showorig_map !=# ''
+        exe 'nmap <silent> <buffer> ' . g:logavim_showorig_map . ' <Plug>LogavimShowOrigLine'
+    endif
 endfunction
 
 function! LogalizedCountSelected() range
@@ -154,7 +158,7 @@ function! LogalizedCountSelected() range
     normal! gv
 endfunction
 
-function! s:cursorHold() abort
+function! s:showCurLineOrig() abort
     try
         let linenr = line('.')
         let line = getbufline(b:logavim__orig_bufnr, linenr, linenr)
@@ -195,7 +199,6 @@ endfunction
 
 augroup LogaVim_Augroup
     au!
-    au! CursorHold * if (exists('b:logavim__orig_bufnr'))| call s:cursorHold() |endif
     au! BufEnter   * if (exists('b:logavim__orig_bufnr'))| call s:bufEnterEvent() |endif
     au! FileChangedShellPost * if (exists('b:logavim__orig_bufnr'))| call s:bufEnterEvent() |endif
 augroup END
