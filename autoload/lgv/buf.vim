@@ -3,11 +3,36 @@ if exists('g:loaded_lgv_buf_autoload')
 endif
 let g:loaded_lgv_buf_autoload = 1
 
+function! s:getDigitCount(number) abort
+    let [n, i] = [a:number, 0]
+    while 1
+        let [n, i] = [n/10, i+1]
+        if n == 0
+            break
+        endif
+    endwhile
+    return i
+endfunction
+
+function! s:getDefaultMaxShrink() abort
+    let ret = &l:columns - 4
+    if &l:number
+        let ret -= (s:getDigitCount(getpos('$')[1]) + 4)
+    endif
+    if ret < 0
+        let ret = 0
+    endif
+    return ret
+endfunction
+
 function! lgv#buf#PopulateUsingScheme(bufnr, scheme, nocolor_list, show_colors, linenr, replace_pats) abort
     let logline = get(a:scheme, 'logline', '')
     let dict = get(a:scheme, 'dict', {})
     let color_section = get(a:scheme, 'color_section', '')
-    let shrink_maxlen = get(a:scheme, 'shrink_maxlen', g:logavim_shrink_maxlen)
+    let shrink_maxlen = get(a:scheme, 'shrink_maxlen', get(g:, 'logavim_shrink_maxlen', -1))
+    if shrink_maxlen == -1
+        let shrink_maxlen = s:getDefaultMaxShrink()
+    endif
     let logpat = s:parseLoglineToPattern(logline, dict, color_section)
     call setbufvar(a:bufnr, 'logavim_line_pattern', logpat)
     if len(a:nocolor_list) || a:show_colors
