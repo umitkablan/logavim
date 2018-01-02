@@ -73,7 +73,7 @@ endfunction
 function! lgv#buf#FilterOutPats(pats, line) abort
     let ret = a:line
     for p in a:pats
-        let ret = substitute(ret, p[0], p[1], '')
+        let ret = substitute(ret, p[0], p[1], 'g')
     endfor
     return ret
 endfunction
