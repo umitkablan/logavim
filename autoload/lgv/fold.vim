@@ -20,7 +20,7 @@ function! lgv#fold#ScanLines(linenr, lines, similarity_threshold, repetition_thr
     let [line_num, diff_start] = [a:linenr-1, a:linenr]
     for line in a:lines
         if line_num < 1 ||
-                    \ s:calcSimilarity(line, a:lines[line_num-a:linenr]) < a:similarity_threshold
+                    \ s:calcSimilarity(line, a:lines[line_num-a:linenr], 0) < a:similarity_threshold
             let diff_start = line_num - diff_start
             if diff_start > a:repetition_threshold
                 execute 'keepjumps normal! ' . line_num . 'Gzf' . diff_start . 'kj'
@@ -109,17 +109,21 @@ function! s:isLineNotIn(line, re_arr) abort
     return 1
 endfunction
 
-function! s:calcSimilarity(ln0, ln1) abort
-    let [cnt, length] = [0, len(a:ln0)]
-    if len(a:ln1) != length
+function! s:calcSimilarity(ln0, ln1, is_len) abort
+    let [minn, maxx] = [len(a:ln0), len(a:ln1)]
+    if !a:is_len && minn != maxx
         return 0.0
     endif
-    for i in range(length)
+    if minn > maxx
+        let [minn, maxx] = [maxx, minn]
+    endif
+    let cnt = 0
+    for i in range(minn)
         if a:ln0[i] ==# a:ln1[i]
             let cnt += 1
         endif
     endfor
-    return (cnt*1.0 / length*1.0) * 100.0
+    return (cnt*1.0 / maxx*1.0) * 100.0
 endfunction
 
 function! s:isLinesSimilar(lines0, lines1, threshold) abort
@@ -128,7 +132,7 @@ function! s:isLinesSimilar(lines0, lines1, threshold) abort
         return 0
     endif
     for i in range(length)
-        if s:calcSimilarity(a:lines0[i], a:lines1[i]) < a:threshold
+        if s:calcSimilarity(a:lines0[i], a:lines1[i], 1) < a:threshold
             break
         endif
         let cnt += 1
