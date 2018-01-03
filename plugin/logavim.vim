@@ -45,13 +45,21 @@ function! s:replaceCmd(args) abort
     call setpos('.', pos)
 endfunction
 
-function! s:foldSimilarCmd(ln1, ln2) abort
+function! s:foldSimilarCmd(ln1, ln2, similarity_threshold) abort
     if a:ln2 - a:ln1 < 1
         echoerr 'LogaVim: LGFoldSimilar must fold more than 1 line'
         return
     endif
+    let similarity = g:logavim_similarity_threshold
+    if a:similarity_threshold !=# ''
+        let similarity = a:similarity_threshold
+    endif
+    if similarity < 50.0
+        echoerr 'LogaVim: LGFoldSimilar threshold is smaller than 50.0!'
+        return
+    endif
     let lines = getline(a:ln1, a:ln2)
-    let b:logavim__fold_similars += [[lines, g:logavim_similarity_threshold]]
+    let b:logavim__fold_similars += [[lines, similarity]]
     let pos = getpos('.')
     call lgv#fold#ScanFull(1, g:logavim_similarity_threshold,
                 \ g:logavim_repetition_threshold, b:logavim__fold_similars,
@@ -138,7 +146,7 @@ function! s:logalizeCmd(args) abort
     execute "normal! \<C-w>_"
 
     command -buffer -nargs=* LGReplace call s:replaceCmd([<f-args>])
-    command -buffer -range   LGFoldSimilar call s:foldSimilarCmd(<line1>, <line2>)
+    command -buffer -nargs=? -range LGFoldSimilar call s:foldSimilarCmd(<line1>, <line2>, <q-args>)
     command -buffer -nargs=* LGFoldRegexp call s:foldRegexpCmd([<f-args>])
     nnoremap <silent> <buffer> <Plug>LogavimShowOrigLine :<C-U>call <SID>showCurLineOrig()<CR>
 

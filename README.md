@@ -109,7 +109,7 @@ let g:logavim_replacement_patterns = [
 
 Folding Annoying Blocks
 -----------------------
-LogaVim not only folds consecutive similar lines (`g:logavim_similarity_threshold`) but also similar blocks with _visual mode_ `:LGFoldSimilar` command usable in `logalized buffer`. After selecting sample block, the command will scan the buffer and fold all blocks resembling to this block. For a hint of how many blocks resemble the current selection, press `/`.
+LogaVim not only folds consecutive similar lines (`g:logavim_similarity_threshold`) but also similar blocks with _visual mode_ `:LGFoldSimilar [min similarity = g:logavim_similarity_threshold]` command usable in `logalized buffer`. After selecting sample block, the command will scan the buffer and fold all blocks resembling to this block. You can pass custom minimum similarity value which is defaulting to `g:logavim_similarity_threshold`. For a hint of how many blocks resemble the current selection, press `/` - this will take global variable into account though.
 
 Sometimes block-wise line-by-line similarity decision is not enough and `regular expressions` make more concise definitions. So, `:LGFoldRegexp <regexp> [<group_name>]` command is also available on `logalized buffer` to fold all matching lines together. `LGFoldRegexp` could be called many times, each will extend this 'match set' (named `<group_name>` and defaults to `_default_`) with the argument passed. Hence, if there are already-known definitions for the log scheme, these regular expressions could be expressed in scheme definition through `fold_groups` attribute:
 ```vim
