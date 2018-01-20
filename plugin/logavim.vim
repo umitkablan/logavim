@@ -13,8 +13,7 @@ endif
 function! s:splitNewBuf(bufname) abort
     setlocal noautoread
     execute 'aboveleft split ' . a:bufname
-    setlocal buftype=nofile bufhidden=delete noswapfile nobuflisted
-    setlocal modifiable noreadonly
+    setlocal buftype= bufhidden=wipe noswapfile nobuflisted
     setlocal foldmethod=manual foldcolumn=0
     setlocal nospell
 endfunction
