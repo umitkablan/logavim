@@ -17,7 +17,7 @@ endfunction
 function! s:getDefaultMaxShrink() abort
     let ret = &l:columns - 4
     if &l:number
-        let ret -= (s:getDigitCount(getpos('$')[1]) + 4)
+        let ret -= (s:getDigitCount(getpos('$')[1]) + 5)
     endif
     if ret < 0
         let ret = 0
