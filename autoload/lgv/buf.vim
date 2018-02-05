@@ -65,34 +65,34 @@ endfunction
 
 function! lgv#buf#Populate(orig_bufnr, scheme_name, nocolor_list, is_noargs,
                         \ replace_pats) abort
-    setlocal modifiable noreadonly
+    setlocal modifiable noreadonly modified
     let ret = lgv#buf#PopulateUsingScheme(a:orig_bufnr,
                     \ lgv#registry#GetByName(a:scheme_name), a:nocolor_list,
                     \ a:is_noargs, 1, a:replace_pats)
-    setlocal nomodifiable readonly
+    setlocal nomodifiable readonly nomodified
     return ret
 endfunction
 
 function! lgv#buf#RefreshFull(orig_bufnr, scheme_name, nocolor_list, is_noargs,
                             \ replace_pats) abort
-    setlocal modifiable noreadonly
+    setlocal modifiable noreadonly modified
     call clearmatches()
     silent execute 'keepjumps normal! gg"_dG'
     let ret = lgv#buf#PopulateUsingScheme(a:orig_bufnr,
                     \ lgv#registry#GetByName(a:scheme_name), a:nocolor_list,
                     \ a:is_noargs, 1, a:replace_pats)
-    setlocal nomodifiable readonly
+    setlocal nomodifiable readonly nomodified
     return ret
 endfunction
 
 function! lgv#buf#RefreshAppend(orig_bufnr, linenr, scheme_name, nocolor_list,
             \ is_noargs, replace_pats) abort
     silent execute 'keepjumps normal! G'
-    setlocal modifiable noreadonly
+    setlocal modifiable noreadonly modified
     let ret = lgv#buf#PopulateUsingScheme(a:orig_bufnr,
                     \ lgv#registry#GetByName(a:scheme_name), a:nocolor_list,
                     \ a:is_noargs, a:linenr+1, a:replace_pats)
-    setlocal nomodifiable readonly
+    setlocal nomodifiable readonly nomodified
     return ret
 endfunction
 
